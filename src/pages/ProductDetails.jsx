@@ -234,12 +234,12 @@ export default function ProductDetail()
           <div className="flex items-center gap-3">
             <button
               onClick={() =>
-                onAddToCart({
-                  id: product.id,
-                  name: product.title,
-                  price: product.price,
-                  image: product.image,
-                  qty,
+                HandleAddToCart({
+
+            name: product.title,
+             price: product.price,
+            image: product.image,
+
                 })
               }
               className="flex-1 border border-[#0f3d2e] text-[#0f3d2e] py-3.5 rounded-full text-sm font-medium hover:bg-[#f0f7f3] transition"
