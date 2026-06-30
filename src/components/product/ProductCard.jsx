@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router";
 
 export default function ProductCard({
@@ -5,51 +6,68 @@ export default function ProductCard({
   onAddToCart,
   image,
   name = "Conbox Electric Fan",
-  price = 48.00, 
+  price = 48.00,
   rating = 4,
   reviews = 18,
-
- 
 }) {
+  const navigate = useNavigate();
+  const [wishlisted, setWishlisted] = useState(false);
+  const [justAdded, setJustAdded] = useState(false);
 
+  const handleAddToCart = (e) => {
+    e.stopPropagation();
+    onAddToCart({ name, price, image });
+    // Brief "added" confirmation before the cart icon returns
+    setJustAdded(true);
+    setTimeout(() => setJustAdded(false), 1200);
+  };
 
-  const navigate =useNavigate();
   return (
     <div
-  onClick={() => navigate(`/product/${product.id}`)}
-  className="bg-white border border-gray-100 hover:border-[#0f3d2e]/20 transition group max-w-[260px] cursor-pointer"
->
-
+      onClick={() => navigate(`/product/${product.id}`)}
+      className="group relative bg-white rounded-2xl border border-gray-100 overflow-hidden max-w-[260px] cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#0f3d2e]/10 hover:border-[#0f3d2e]/15"
+    >
       {/* IMAGE */}
-      <div className="relative aspect-square bg-[#f0f7f3] overflow-hidden flex items-center justify-center">
+      <div className="relative aspect-square bg-[#f0f7f3] overflow-hidden">
         {image ? (
           <img
             src={image}
             alt={name}
-            className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+            className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
           />
         ) : (
-          <svg
-            className="w-16 h-16 text-[#0f3d2e]/30"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
+          <div className="w-full h-full flex items-center justify-center">
+            <svg
+              className="w-16 h-16 text-[#0f3d2e]/30"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
         )}
+
+        {/* Subtle gradient for depth on hover, sits under the wishlist button */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
         {/* WISHLIST */}
         <button
-        onClick={(e) => {
-        e.stopPropagation();}}
+          onClick={(e) => {
+            e.stopPropagation();
+            setWishlisted((w) => !w);
+          }}
           aria-label="Add to wishlist"
-          className="absolute top-3 right-3 w-8 h-8 bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+          className={`absolute top-3 right-3 w-8 h-8 rounded-full bg-white/95 backdrop-blur-sm flex items-center justify-center shadow-sm transition-all duration-300 hover:scale-110 ${
+            wishlisted ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+          }`}
         >
           <svg
-            className="w-4 h-4 text-[#0f3d2e]"
-            fill="none"
+            className={`w-4 h-4 transition-all duration-300 ${
+              wishlisted ? "text-[#0f3d2e] scale-110" : "text-[#0f3d2e]"
+            }`}
+            fill={wishlisted ? "currentColor" : "none"}
             stroke="currentColor"
             strokeWidth="1.5"
             viewBox="0 0 24 24"
@@ -61,6 +79,30 @@ export default function ProductCard({
             />
           </svg>
         </button>
+
+        {/* Quick-add overlay button — slides up from the bottom edge on hover */}
+        <button
+          onClick={handleAddToCart}
+          aria-label="Add to cart"
+          className="absolute left-3 right-3 bottom-3 translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 ease-out bg-[#0f3d2e] hover:bg-[#154d3b] text-white text-xs font-semibold py-2.5 rounded-full flex items-center justify-center gap-1.5"
+        >
+          {justAdded ? (
+            <>
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              Added
+            </>
+          ) : (
+            <>
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 7h12l1 14H5L6 7z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 7V5a3 3 0 016 0v2" />
+              </svg>
+              Add to cart
+            </>
+          )}
+        </button>
       </div>
 
       {/* CONTENT */}
@@ -71,7 +113,9 @@ export default function ProductCard({
           {Array.from({ length: 5 }).map((_, i) => (
             <svg
               key={i}
-              className={`w-3 h-3 ${i < rating ? "text-[#0f3d2e]" : "text-gray-200"}`}
+              className={`w-3 h-3 transition-colors duration-200 ${
+                i < rating ? "text-[#0f3d2e]" : "text-gray-200"
+              }`}
               fill="currentColor"
               viewBox="0 0 20 20"
             >
@@ -82,37 +126,32 @@ export default function ProductCard({
         </div>
 
         {/* NAME */}
-        <h3 className="text-sm font-medium text-gray-800 leading-snug">
+        <h3 className="text-sm font-medium text-gray-800 leading-snug line-clamp-2">
           {name}
         </h3>
 
-        {/* PRICE + CART */}
+        {/* PRICE + CART (small icon button stays for non-hover / touch devices) */}
         <div className="flex items-center justify-between pt-1">
-          {/* Agar price string nahi hai toh format lag jaye ($) ka */}
           <span className="text-sm font-semibold text-[#0f3d2e]">
-            {typeof price === 'number' ? `$${price}` : price}
+            {typeof price === "number" ? `$${price.toFixed(2)}` : price}
           </span>
 
-       
-         <button
-  onClick={(e) => {
-    e.stopPropagation();
-    onAddToCart({ name, price, image });
-  }}
-  aria-label="Add to cart"
-  className="w-8 h-8 flex items-center justify-center border border-[#0f3d2e]/20 hover:bg-[#0f3d2e] hover:border-[#0f3d2e] text-[#0f3d2e] hover:text-white transition cursor-pointer"
->
-  <svg
-    className="w-4 h-4"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    viewBox="0 0 24 24"
-  >
-    <path strokeLinecap="round" strokeLinejoin="round" d="M6 7h12l1 14H5L6 7z" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M9 7V5a3 3 0 016 0v2" />
-  </svg>
-</button>
+          <button
+            onClick={handleAddToCart}
+            aria-label="Add to cart"
+            className="w-8 h-8 rounded-full flex items-center justify-center border border-[#0f3d2e]/20 hover:bg-[#0f3d2e] hover:border-[#0f3d2e] text-[#0f3d2e] hover:text-white transition-all duration-300 hover:scale-110 cursor-pointer sm:hidden"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 7h12l1 14H5L6 7z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 7V5a3 3 0 016 0v2" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>

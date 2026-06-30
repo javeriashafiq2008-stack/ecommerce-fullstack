@@ -6,12 +6,9 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
 
-  // Pulling cart-related state directly from global context
-  // so Navbar no longer depends on props from Home.jsx
-  const { cart, isCartOpen, setIsCartOpen, HandleAddToCart } = useContext(ShopContext);
+  
+  const { cart, isCartOpen, setIsCartOpen, HandleAddToCart, HandleDecreaseQty } = useContext(ShopContext);
 
-  // Keeps the drawer mounted briefly during close so the slide-out
-  // animation can finish before it's removed from the DOM
   const [shouldRenderCart, setShouldRenderCart] = useState(false);
   
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
@@ -34,22 +31,13 @@ export default function Navbar() {
     };
   }, [isCartOpen]);
 
-  // Order total calculations
-  const totalAmount = cart.reduce((total, item) => total + Number(item?.price || 0), 0);
+  
+  const totalAmount = cart.reduce(
+    (total, item) => total + Number(item?.price || 0) * Number(item?.qty || 1),
+    0
+  );
   const shippingAndTax = cart.length > 0 ? 5.00 : 0;
   const grandTotal = totalAmount + shippingAndTax;
-
-  // Aggregate duplicate line items into a single display with quantities
-  const groupedCart = cart.reduce((acc, item) => {
-    if (!item) return acc;
-    const existing = acc.find((g) => g.name === item.name);
-    if (existing) {
-      existing.qty += 1;
-    } else {
-      acc.push({ ...item, qty: 1 });
-    }
-    return acc;
-  }, []);
 
   return (
     <>
@@ -72,13 +60,15 @@ export default function Navbar() {
           {/* DESKTOP LINKS */}
           <div className="hidden md:flex items-center space-x-10 text-sm font-medium uppercase tracking-wider">
             <Link to="/" className="relative text-white/90 hover:text-white transition after:absolute after:left-0 after:-bottom-1 after:h-px after:w-0 after:bg-white after:transition-all after:duration-300 hover:after:w-full">Home</Link>
+            <Link to="/products" className="relative text-white/90 hover:text-white transition after:absolute after:left-0 after:-bottom-1 after:h-px after:w-0 after:bg-white after:transition-all after:duration-300 hover:after:w-full">Products</Link>
+            <Link to="/about" className="relative text-white/90 hover:text-white transition after:absolute after:left-0 after:-bottom-1 after:h-px after:w-0 after:bg-white after:transition-all after:duration-300 hover:after:w-full">About</Link>
             <Link to="/contact" className="relative text-white/90 hover:text-white transition after:absolute after:left-0 after:-bottom-1 after:h-px after:w-0 after:bg-white after:transition-all after:duration-300 hover:after:w-full">Contact</Link>
           </div>
 
           {/* RIGHT ACTIONS */}
           <div className="flex items-center space-x-5 relative">
 
-            {/* 🛍️ CART - now toggles using context state directly */}
+            {/*  CART - now toggles using context state directly */}
             <div
               onClick={() => setIsCartOpen(!isCartOpen)}
               className="relative cursor-pointer group"
@@ -103,7 +93,7 @@ export default function Navbar() {
               </svg>
 
               <span className="absolute -top-2 -right-2 bg-white text-black text-xs rounded-full px-1.5 font-bold">
-                {cart?.length || 0}
+                {cart.reduce((sum, item) => sum + Number(item?.qty || 1), 0) || 0}
               </span>
             </div>
 
@@ -176,8 +166,11 @@ export default function Navbar() {
         {mobileOpen && (
           <div className="md:hidden border-t border-[#1a4d3c] py-4 space-y-3 text-sm font-medium uppercase tracking-wider animate-[fadeSlide_0.25s_ease-out]">
             <Link to="/" className="block text-white/90 hover:text-white transition" onClick={() => setMobileOpen(false)}>Home</Link>
+            <Link to="/products" className="block text-white/90 hover:text-white transition" onClick={() => setMobileOpen(false)}>Products</Link>
+                <Link to="/about" className="block text-white/90 hover:text-white transition" onClick={() => setMobileOpen(false)}>About</Link>
             <Link to="/contact" className="block text-white/90 hover:text-white transition" onClick={() => setMobileOpen(false)}>Contact</Link>
-
+        
+            
             <div className="border-t border-[#1a4d3c] pt-3 space-y-3">
               <Link to="/login" className="block text-white/90 hover:text-white transition" onClick={() => setMobileOpen(false)}>Login</Link>
               <Link to="/register" className="block text-white/90 hover:text-white transition" onClick={() => setMobileOpen(false)}>Register</Link>
@@ -235,8 +228,8 @@ export default function Navbar() {
                 <div className="text-center py-16 text-gray-400 text-sm">Your cart is empty</div>
               ) : (
                 <div className="divide-y divide-gray-100">
-                  {groupedCart.map((item, index) => (
-                    <div key={item.name ?? index} className="flex gap-4 p-4 items-start">
+                  {cart.map((item, index) => (
+                    <div key={item.id ?? item.name ?? index} className="flex gap-4 p-4 items-start">
                       <img src={item.image} alt={item.name} className="w-20 h-20 object-cover rounded-xl bg-[#f0f7f3] flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">{item.name}</h4>
@@ -245,14 +238,18 @@ export default function Navbar() {
 
                         {/* Quantity Adjustment */}
                         <div className="mt-2.5 inline-flex items-center bg-[#f5f0ea] rounded-full px-1 py-1">
-                          <button className="w-6 h-6 rounded-full flex items-center justify-center text-gray-500 hover:bg-white transition" aria-label="Decrease quantity">
+                          <button
+                            onClick={() => HandleDecreaseQty({ id: item.id, name: item.name })}
+                            className="w-6 h-6 rounded-full flex items-center justify-center text-gray-500 hover:bg-white transition"
+                            aria-label="Decrease quantity"
+                          >
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                               <path strokeLinecap="round" d="M5 12h14" />
                             </svg>
                           </button>
                           <span className="w-7 text-center text-sm font-medium text-gray-800">{item.qty}</span>
                           <button
-                            onClick={() => HandleAddToCart({ name: item.name, price: item.price, image: item.image })}
+                            onClick={() => HandleAddToCart({ id: item.id, name: item.name, price: item.price, image: item.image })}
                             className="w-6 h-6 rounded-full flex items-center justify-center bg-[#0f3d2e] text-white hover:bg-[#154d3b] transition"
                             aria-label="Increase quantity"
                           >

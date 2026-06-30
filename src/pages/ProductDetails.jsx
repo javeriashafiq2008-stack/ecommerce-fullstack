@@ -18,7 +18,7 @@ export default function ProductDetail()
   const [wishlisted, setWishlisted] = useState(false);
 
   // Reset local UI state whenever the viewed product changes
-  // (e.g. user navigates from one product page to another)
+  
   useEffect(() => {
     setActiveImage(0);
     setQty(1);
@@ -230,16 +230,16 @@ export default function ProductDetail()
             </button>
           </div>
 
-          {/* ACTIONS — both feed straight into your existing HandleAddToCart via onAddToCart */}
+          {/* ACTIONS — both feed straight into your existing HandleAddToCart */}
           <div className="flex items-center gap-3">
             <button
               onClick={() =>
                 HandleAddToCart({
-
-            name: product.title,
-             price: product.price,
-            image: product.image,
-
+                  id: product.id,
+                  name: product.title,
+                  price: product.price,
+                  image: product.image,
+                  qty,
                 })
               }
               className="flex-1 border border-[#0f3d2e] text-[#0f3d2e] py-3.5 rounded-full text-sm font-medium hover:bg-[#f0f7f3] transition"
@@ -248,7 +248,7 @@ export default function ProductDetail()
             </button>
             <button
               onClick={() => {
-                onAddToCart({
+                HandleAddToCart({
                   id: product.id,
                   name: product.title,
                   price: product.price,

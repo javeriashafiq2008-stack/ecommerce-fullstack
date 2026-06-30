@@ -12,7 +12,7 @@ function Root() {
     
      <Navbar/>
     <Outlet/>
-    {/* <Footer/> */}
+    <Footer/>
     
     
     

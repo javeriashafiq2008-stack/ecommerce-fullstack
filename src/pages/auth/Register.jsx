@@ -1,15 +1,9 @@
-import React from "react";
-import ReuseableAuthenticationForm from "../ReuseableauthenticatedForm";
+import React from 'react'
 
 function Register() {
   return (
-    <>
-    
-    <ReuseableAuthenticationForm></ReuseableAuthenticationForm>
-    
-    
-    </>
-  );
+    <div>Register</div>
+  )
 }
 
-export default Register;
+export default Register
