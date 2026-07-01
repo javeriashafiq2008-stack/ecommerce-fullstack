@@ -8,6 +8,7 @@ import Products from "./pages/Products";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Login from "./pages/auth/Login";
+import Billing from "./pages/Billing";
 
 
 const router= createBrowserRouter([{
@@ -57,7 +58,17 @@ const router= createBrowserRouter([{
    path:"product/:id",
    Component:ProductDetails
    
-   }]
+   },
+    
+   {
+   
+    path:"billing",
+    Component:Billing
+
+
+   }
+  
+  ]
 
    
 

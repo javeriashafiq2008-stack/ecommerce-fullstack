@@ -1,5 +1,5 @@
 import { useState, useContext, useEffect } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { ShopContext } from "./context/ShopContext";
 
 export default function Navbar() {
@@ -12,6 +12,8 @@ export default function Navbar() {
   const [shouldRenderCart, setShouldRenderCart] = useState(false);
   
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     let rafId;
@@ -282,7 +284,10 @@ export default function Navbar() {
                   <p className="text-base font-bold text-gray-900">${grandTotal.toFixed(2)}</p>
                 </div>
 
-                <button className="w-full bg-[#0f3d2e] hover:bg-[#154d3b] text-white py-3.5 rounded-full font-medium transition text-center text-sm cursor-pointer">
+                <button className="w-full bg-[#0f3d2e] hover:bg-[#154d3b] text-white py-3.5 rounded-full font-medium transition text-center text-sm cursor-pointer"
+                onClick={()=>  {navigate("/billing") , setIsCartOpen(false)}}
+                
+                >
                   Checkout Now
                 </button>
               </div>

@@ -9,18 +9,9 @@ function Root() {
     
   return (
     <>
-    
      <Navbar/>
     <Outlet/>
-    <Footer/>
-    
-    
-    
-    
-    
-    
-    
-    
+    <Footer/>    
     </>
   )
 }

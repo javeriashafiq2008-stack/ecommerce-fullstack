@@ -60,9 +60,7 @@ export default function Footer() {
           <p className="text-xs text-white/50">
             &copy; {year} Jaydor. All rights reserved.
           </p>
-          <p className="text-xs text-white/50">
-            Made with care in Karachi, Pakistan.
-          </p>
+         
         </div>
       </div>
     </footer>
@@ -105,5 +103,5 @@ function SocialIcon({ label, children }) {
         {children}
       </svg>
     </a>
-  )
+  );
 }
