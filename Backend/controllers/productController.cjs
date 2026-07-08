@@ -13,22 +13,31 @@ const getVendorProducts = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
-
 const createProduct = async (req, res) => {
     try {
         const vendorId = req.user.id;
         const { title, price, description } = req.body;
 
+        const imageUrl = req.file ? req.file.path : null;
+
         const newProduct = await Product.create({
-           title,
+            title,
             price,
             description,
-            vendor_id: vendorId 
+            imageUrl,
+            vendor_id: vendorId
         });
 
-        return res.status(201).json({ success: true, data: newProduct });
+        return res.status(201).json({
+            success: true,
+            data: newProduct
+        });
+
     } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
+        return res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
 };
 
