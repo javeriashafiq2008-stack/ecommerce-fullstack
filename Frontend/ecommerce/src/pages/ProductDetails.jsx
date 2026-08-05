@@ -38,17 +38,23 @@ function AccordionRow({ title, isOpen, onToggle, children }) {
 // Compact card used in the "You may also like" strip below the main product.
 function RelatedCard({ item, onClick }) {
   const hasMember = typeof item.memberPrice === "number";
+  const [loaded, setLoaded] = useState(false);
   return (
     <button
       onClick={onClick}
       className="group text-left animate-[riseIn_0.4s_ease-out]"
     >
       <div className="aspect-square bg-[#f0f7f3] overflow-hidden rounded-xl">
-        {item.image ? (
+        {item.imageUrl ? (
           <img
-            src={item.image}
+            src={item.imageUrl}
             alt={item.title}
-            className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+            loading="lazy"
+            decoding="async"
+            onLoad={() => setLoaded(true)}
+            className={`w-full h-full object-cover transition-all duration-500 ease-out group-hover:scale-110 ${
+              loaded ? "opacity-100" : "opacity-0"
+            }`}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -77,8 +83,21 @@ function RelatedCard({ item, onClick }) {
 
 export default function ProductDetail() {
   const { id } = useParams();
-  const { products, HandleAddToCart } = useContext(ShopContext);
-  const product = products.find((p) => p.id === Number(id));
+  const {
+    products,
+    cart,
+    setIsCartOpen,
+    HandleAddToCart,
+    HandleIncreaseQty,
+    HandleDecreaseQty,
+    requireAuthForCheckout,
+  } = useContext(ShopContext);
+  const product = products.find((p) => p.id === id);
+
+  // If this product is already sitting in the cart, the qty stepper below
+  // should drive that real cart line (same as the Navbar cart drawer) —
+  // not a separate local "amount to add" counter.
+  const cartItem = cart.find((item) => item.productId === product?.id);
 
   const [activeImage, setActiveImage] = useState(0);
   const [prevImage, setPrevImage] = useState(0);
@@ -89,16 +108,27 @@ export default function ProductDetail() {
   const [pulseQty, setPulseQty] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
   const [zooming, setZooming] = useState(false);
+  // NEW: tracks whether the currently-active main gallery image has
+  // actually finished loading, so the fade-in reflects real load state
+  // instead of firing on a fixed CSS animation regardless of whether the
+  // image bytes have arrived yet (which is what made loads over a slower
+  // connection look like an abrupt pop instead of a smooth reveal).
+  const [mainImageLoaded, setMainImageLoaded] = useState(false);
   const addedTimeout = useRef(null);
   const navigate = useNavigate();
 
-  // Reset local UI state whenever the viewed product changes
+  // Reset local UI state whenever the viewed product changes.
+  // NOTE: `product` is included here (not just `id`) because `products`
+  // can still be loading when this route first mounts — if we only key
+  // off `id`, this effect fires once against a possibly-undefined
+  // `product` and never re-syncs `wishlisted` once the real product
+  // data arrives.
   useEffect(() => {
     setActiveImage(0);
     setPrevImage(0);
     setQty(1);
     setWishlisted(product?.isFavorite ?? false);
-  }, [id]);
+  }, [id, product]);
 
   useEffect(() => () => clearTimeout(addedTimeout.current), []);
 
@@ -112,9 +142,25 @@ export default function ProductDetail() {
     );
   }
 
-  // Build the gallery from `image` plus any extra `images`, filtering out
-  // missing entries (some of your mock items, like id 17, have no image yet).
-  const gallery = [product.image, ...(product.images || [])].filter(Boolean);
+  // Build the gallery from `imageUrl` (cover) plus `images` (the full
+  // gallery array saved from the vendor's multi-image upload), deduped
+  // and with empties filtered out — same combine+dedupe pattern used in
+  // EditProduct's fillForm.
+  //
+  // Guarded against `images` being a bare string instead of an array
+  // (legacy/bad data) — spreading a string in JS splits it into individual
+  // characters, which previously produced dozens of broken single-letter
+  // "image" entries for any product saved before images was consistently
+  // an array.
+  const rawImages = Array.isArray(product.images)
+    ? product.images
+    : product.images
+    ? [product.images]
+    : [];
+
+  const gallery = [product.imageUrl, ...rawImages].filter(
+    (img, idx, arr) => Boolean(img) && arr.indexOf(img) === idx
+  );
 
   // "You may also like" — same-category items first, topped up with other
   // products if the category doesn't have enough on its own. Capped at 4.
@@ -138,12 +184,37 @@ export default function ProductDetail() {
     if (i === activeImage) return;
     setPrevImage(activeImage);
     setActiveImage(i);
+    // Reset the fade for the newly-selected image — it hasn't loaded yet
+    // (or may already be cached, in which case onLoad still fires
+    // synchronously enough to feel instant).
+    setMainImageLoaded(false);
   };
 
   const bumpQty = (next) => {
     setQty(next);
     setPulseQty(true);
     setTimeout(() => setPulseQty(false), 180);
+  };
+
+  // The number actually shown in the stepper: the live cart quantity if
+  // this product is already in the cart, otherwise the local "amount to
+  // add" the user is staging before hitting Add to cart.
+  const displayedQty = cartItem ? cartItem.qty : qty;
+
+  const handleDecrease = () => {
+    if (cartItem) {
+      HandleDecreaseQty(cartItem);
+    } else {
+      bumpQty(Math.max(1, qty - 1));
+    }
+  };
+
+  const handleIncrease = () => {
+    if (cartItem) {
+      HandleIncreaseQty(cartItem);
+    } else {
+      bumpQty(qty + 1);
+    }
   };
 
   const handleMouseMove = (e) => {
@@ -154,16 +225,26 @@ export default function ProductDetail() {
     });
   };
 
+  // FIX: previously this sent `{ id, name, price, image, qty }`, but
+  // HandleAddToCart only ever reads `product.id` and hardcoded the
+  // quantity to 1 on the backend call — so the qty selector on this page
+  // was silently ignored. Now we pass just what's needed (id + qty) and
+  // HandleAddToCart (in ShopContext) forwards qty through to the API.
+  // See ShopContext.jsx: HandleAddToCart(product, quantity) change.
+  //
+  // "Buy now" no longer navigates straight to /billing — it routes
+  // through requireAuthForCheckout, which sends logged-in users on
+  // through exactly as before, and opens the login/register gate for
+  // guests (remembering /billing so they land back here after auth).
   const addToCart = (goToCheckout) => {
-    HandleAddToCart({
-      id: product.id,
-      name: product.title,
-      price: product.price,
-      image: product.image,
-      qty,
-    });
+    // If it's already a cart line, the stepper above has been editing it
+    // directly — don't add it again on top of that.
+    if (!cartItem) {
+      HandleAddToCart({ id: product.id }, qty);
+    }
+
     if (goToCheckout) {
-      navigate("/billing");
+      requireAuthForCheckout("/billing");
       return;
     }
     setJustAdded(true);
@@ -188,7 +269,12 @@ export default function ProductDetail() {
                 key={activeImage}
                 src={gallery[activeImage]}
                 alt={product.title}
-                className="w-full h-full object-cover animate-[fadeIn_0.35s_ease-out] transition-transform duration-300 ease-out"
+                loading="eager"
+                decoding="async"
+                onLoad={() => setMainImageLoaded(true)}
+                className={`w-full h-full object-cover transition-all duration-300 ease-out ${
+                  mainImageLoaded ? "opacity-100" : "opacity-0"
+                }`}
                 style={
                   zooming
                     ? {
@@ -260,6 +346,8 @@ export default function ProductDetail() {
                   <img
                     src={img}
                     alt={`${product.title} view ${i + 1}`}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover"
                   />
                 </button>
@@ -341,9 +429,9 @@ export default function ProductDetail() {
           <div className="flex items-center gap-3 pb-5">
             <div className="inline-flex items-center bg-[#f5f0ea] rounded-full px-1 py-1">
               <button
-                onClick={() => bumpQty(Math.max(1, qty - 1))}
+                onClick={handleDecrease}
                 aria-label="Decrease quantity"
-                disabled={qty <= 1}
+                disabled={!cartItem && qty <= 1}
                 className="w-8 h-8 rounded-full flex items-center justify-center text-gray-600 hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent transition"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -355,10 +443,10 @@ export default function ProductDetail() {
                   pulseQty ? "scale-125" : "scale-100"
                 }`}
               >
-                {qty}
+                {displayedQty}
               </span>
               <button
-                onClick={() => bumpQty(qty + 1)}
+                onClick={handleIncrease}
                 aria-label="Increase quantity"
                 className="w-8 h-8 rounded-full flex items-center justify-center bg-[#0f3d2e] text-white hover:bg-[#154d3b] active:scale-90 transition"
               >
@@ -381,7 +469,7 @@ export default function ProductDetail() {
           {/* ACTIONS */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => addToCart(false)}
+              onClick={() => (cartItem ? setIsCartOpen(true) : addToCart(false))}
               className={`relative flex-1 overflow-hidden border py-3.5 rounded-full text-sm font-medium transition-all duration-300 ${
                 justAdded
                   ? "border-[#0f3d2e] bg-[#0f3d2e] text-white"
@@ -393,7 +481,7 @@ export default function ProductDetail() {
                   justAdded ? "-translate-y-8 opacity-0" : "translate-y-0 opacity-100"
                 }`}
               >
-                Add to cart
+                {cartItem ? "Go to cart" : "Add to cart"}
               </span>
               <span
                 className={`absolute inset-0 flex items-center justify-center gap-1.5 transition-all duration-300 ${

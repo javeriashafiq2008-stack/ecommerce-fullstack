@@ -1,30 +1,23 @@
-const express =require ("express")
-const dotenv = require('dotenv')
-dotenv.config()
-const  app=require('./app.cjs')
-let sequelize=require('./config/db_config.cjs')
-let port=3000;
+const dotenv = require("dotenv");
+dotenv.config();
 
+require("./models/association.cjs");
 
+const app = require("./app.cjs");
+const sequelize = require("./config/db_config.cjs");
 
+const port = process.env.PORT || 3000;
 
-
-(async()=>{
-  try{
-     await sequelize.sync({alter:true})
+(async () => {
+  try {
     await sequelize.authenticate();
-   
-
-    console.log("Connection has been established successfully ")
+    await sequelize.sync({ alter: true });
+    console.log("Connection has been established successfully");
+  } catch (error) {
+    console.error("Unable to connect to the Database", error);
   }
+})();
 
-      
-  catch(error){
-    console.error("Unable to connect to the Database",error)
-  }})()
-
-    app.listen(port,()=>{
-  console.log("Server is working")
-})
-  
- 
+app.listen(port, () => {
+  console.log(`Server is working on port ${port}`);
+});

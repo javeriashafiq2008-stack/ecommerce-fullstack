@@ -1,5 +1,4 @@
 const express = require('express');
-const cors = require('cors');
 const User =require("./models/userModel.cjs");
 const Product =require("./models/productModel.cjs");
 const Cart = require("./models/cartModel.cjs");
@@ -9,13 +8,19 @@ const vendorRoute = require("./routes/vendorRoute.cjs");
 const catalogRoute = require("./routes/catalogRoute.cjs");
 const cartRoute =require("./routes/cartRoute.cjs");
 const checkoutRoute = require("./routes/orderRoute.cjs");
-const adminRoute=require("./routes/adminRoute.cjs")
-
-
-
+const adminRoute=require("./routes/adminRoute.cjs");
 const app = express();
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
 
-app.use(cors());
+
+app.use(
+  cors({
+    origin: "http://localhost:5173", 
+    credentials: true,
+  })
+);
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -24,7 +29,7 @@ app.use("/api/vendor", vendorRoute );
 app.use("/api/products", catalogRoute);
 app.use("/api/cart", cartRoute);
 app.use("/api/checkout" , checkoutRoute);
-app.use("/api/admin" , adminRoute)
+app.use("/api/admin" , adminRoute);
 
 
 

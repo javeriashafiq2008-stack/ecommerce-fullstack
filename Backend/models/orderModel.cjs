@@ -9,11 +9,8 @@ const Order = sequelize.define("Order", {
     },
     userId: {
         type: DataTypes.UUID,
-        allowNull: false,
-        references: {
-            model: "Users",
-            key: "id",
-        },
+        allowNull: false
+        
     },
     totalAmount: {
         type: DataTypes.DECIMAL(10, 2),
@@ -38,7 +35,7 @@ const Order = sequelize.define("Order", {
         defaultValue: "Pending",
     },
     shippingAddress: {
-        type: DataTypes.TEXT,
+        type: DataTypes.JSON,
         allowNull: false,
     },
 });

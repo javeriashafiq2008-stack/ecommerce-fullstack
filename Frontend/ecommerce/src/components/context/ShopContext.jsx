@@ -1,139 +1,228 @@
-import React, { createContext, useState, useEffect } from "react";
-import { AddToCartLogic, DecreaseCartQtyLogic, RemoveFromCartLogic } from "../../CartUtils";
+import React, { createContext, useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router";
+import { useSelector } from "react-redux";
+import api from "../../api/axios.js";
+import {
+  addToCart,
+  getCart,
+  updateCartItem,
+  removeFromCart,
+} from "../../services/cartService.js";
+import AuthGateModal from "../AuthGateModal.jsx";
 
 export const ShopContext = createContext();
+
+const normalizeCartItem = (item) => ({
+  id: item.id,
+  productId: item.productId,
+  qty: item.quantity,
+  name: item.Product?.title,
+  price: item.Product?.price,
+  image: item.Product?.imageUrl,
+});
+
+const normalizeCart = (rawCart) => (rawCart || []).map(normalizeCartItem);
 
 export const ShopProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [products, setProducts] = useState([]);
 
-  const MOCK_PRODUCTS = [
+  // ── Guest checkout gate ────────────────────────────────────────────────
+  // authModalOpen: controls the "please log in" modal.
+  // redirectPath: where to send the user after they successfully log in
+  // or register, IF they hit the gate via requireAuthForCheckout. Stays
+  // null on a normal, un-gated login (e.g. visiting /login directly),
+  // so Login/Register can safely fall back to "/" when it's null.
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [redirectPath, setRedirectPath] = useState(null);
 
-    {
-      id: 2,
-      title: "Premium Wireless Headphones",
-      price: 199.99,
-      image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80"
-    },
-    {
-      id: 3,
-      title: "Minimalist Leather Watch",
-      price: 125.50,
-      image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80"
-    },
-    {
-      id: 4,
-      title: "Ergonomic Mechanical Keyboard",
-      price: 89.00,
-      image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=600&auto=format&fit=crop&q=80"
-    },
-    {
-      id: 5,
-      title: "Urban Waterproof Backpack",
-      price: 65.00,
-      image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&auto=format&fit=crop&q=80"
-    },
-    {
-      id: 6,
-      title: "Classic White Sneakers",
-      price: 79.99,
-      image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&auto=format&fit=crop&q=80"
-    },
-    {
-      id: 7,
-      title: "Matte Black Smart Thermos",
-      price: 34.50,
-      image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&auto=format&fit=crop&q=80"
-    },
-    {
-      id: 8,
-      title: "Wireless Ergonomic Mouse",
-      price: 45.00,
-      image: "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=600&auto=format&fit=crop&q=80"
-    },
-    {
-      id: 9,
-      title: "Aromatic Scented Candle Set",
-      price: 28.00,
-      image: "https://images.unsplash.com/photo-1603006905003-be475563bc59?w=600&auto=format&fit=crop&q=80"
-    },
-    {
-      id: 10,
-      title: "Polarized Retro Sunglasses",
-      price: 55.00,
-      image: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=600&auto=format&fit=crop&q=80"
-    },
-
-    {
-      id: 12,
-      title: "Vintage Denim Jacket",
-      price: 85.00,
-      image: "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600&auto=format&fit=crop&q=80"
-    },
-    {
-      id: 13,
-      title: "Desktop RGB Ring Light",
-      price: 24.99,
-      image: "https://images.unsplash.com/photo-1590608897129-79da98d15969?w=600&auto=format&fit=crop&q=80"
-    },
-    {
-      id: 14,
-      title: "Leather Pocket Journal",
-      price: 19.50,
-      image: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=600&auto=format&fit=crop&q=80"
-    },
-    {
-      id: 15,
-      title: "Compact Bluetooth Speaker",
-      price: 59.00,
-      image: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=600&auto=format&fit=crop&q=80"
-    },
-    {
-      id: 16,
-      title: "Ceramic Coffee Mug (Sage)",
-      price: 16.00,
-      image: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=600&auto=format&fit=crop&q=80"
-    },
-
-    {
-      id: 18,
-      title: "Premium Yoga Mat",
-      price: 49.99,
-      image: "https://images.unsplash.com/photo-1592432678016-e910b452f9a2?w=600&auto=format&fit=crop&q=80"
-    },
-    {
-      id: 19,
-      title: "Dimmable Bedside Lamp",
-      price: 32.00,
-      image: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=600&auto=format&fit=crop&q=80"
-    },
-    {
-      id: 20,
-      title: "Leather Bi-Fold Wallet",
-      price: 45.00,
-      image: "https://images.unsplash.com/photo-1627123424574-724758594e93?w=600&auto=format&fit=crop&q=80"
-    }
-  ];
+  const navigate = useNavigate();
+  const isAuthenticated = useSelector((state) => state.authentication.isAuthenticated);
 
   useEffect(() => {
-    setProducts(MOCK_PRODUCTS);
+    const fetchProducts = async () => {
+      try {
+        const response = await api.get("/api/products");
+
+        const parsedProducts = response.data.data.map(product => ({
+          ...product,
+          images:
+            typeof product.images === "string"
+              ? JSON.parse(product.images)
+              : product.images,
+        }));
+
+        setProducts(parsedProducts);
+      } catch (error) {
+        console.log(error.response?.data || error.message);
+      }
+    };
+
+    fetchProducts();
   }, []);
 
-  // Adds a product to the cart, or bumps its qty if it's already there.
-  // `productData.qty` is optional — defaults to 1 inside AddToCartLogic.
-  const HandleAddToCart = (productData) => {
-    setCart((prevCart) => AddToCartLogic(prevCart, productData));
+  // ── Guest cart → server cart merge ──────────────────────────────────────
+  // The backend's /api/cart routes require a valid auth cookie (see
+  // authenticate middleware), so while isAuthenticated is false, cart
+  // reads/writes below never touch the API — they operate on local state
+  // only. The moment isAuthenticated flips false → true (successful login
+  // or register), whatever was staged locally gets replayed through the
+  // real addToCart API one line at a time, and `cart` is swapped over to
+  // the server-normalized version. Components never see this switch —
+  // they just keep reading `cart` the same way.
+  const cartRef = useRef(cart);
+  useEffect(() => {
+    cartRef.current = cart;
+  }, [cart]);
+
+  const wasAuthenticatedRef = useRef(isAuthenticated);
+  useEffect(() => {
+    const wasAuthenticated = wasAuthenticatedRef.current;
+    wasAuthenticatedRef.current = isAuthenticated;
+
+    if (!wasAuthenticated && isAuthenticated) {
+      const guestItems = cartRef.current;
+      if (guestItems.length === 0) return;
+
+      const mergeGuestCart = async () => {
+        let latestCart = null;
+        for (const item of guestItems) {
+          try {
+            const response = await addToCart(item.productId, item.qty);
+            latestCart = response.cart;
+          } catch (error) {
+            console.log(error.response?.data || error.message);
+          }
+        }
+        if (latestCart) setCart(normalizeCart(latestCart));
+      };
+
+      mergeGuestCart();
+    }
+  }, [isAuthenticated]);
+
+  const HandleAddToCart = async (product, quantity = 1) => {
+    if (!isAuthenticated) {
+      // Look the full product up from the already-loaded catalog so the
+      // local cart line has real name/price/image regardless of whether
+      // the caller passed a full product object or just { id }.
+      const fullProduct = products.find((p) => p.id === product.id) || product;
+
+      setCart((prev) => {
+        const existing = prev.find((item) => item.productId === product.id);
+        if (existing) {
+          return prev.map((item) =>
+            item.productId === product.id
+              ? { ...item, qty: item.qty + quantity }
+              : item
+          );
+        }
+        return [
+          ...prev,
+          {
+            id: product.id, // no server cart-line id yet — productId stands in
+            productId: product.id,
+            qty: quantity,
+            name: fullProduct.title,
+            price: fullProduct.price,
+            image: fullProduct.imageUrl,
+          },
+        ];
+      });
+      return;
+    }
+
+    try {
+      const response = await addToCart(product.id, quantity);
+      setCart(normalizeCart(response.cart));
+    } catch (error) {
+      console.log(error.response?.data || error.message);
+    }
   };
 
-  // Decreases a product's quantity by 1, removing it once it hits 0.
-  const HandleDecreaseQty = (productData) => {
-    setCart((prevCart) => DecreaseCartQtyLogic(prevCart, productData));
+  const HandleIncreaseQty = async (cartItem) => {
+    if (!isAuthenticated) {
+      setCart((prev) =>
+        prev.map((item) =>
+          item.productId === cartItem.productId
+            ? { ...item, qty: item.qty + 1 }
+            : item
+        )
+      );
+      return;
+    }
+
+    try {
+      const response = await updateCartItem(cartItem.id, cartItem.qty + 1);
+      setCart(normalizeCart(response.cart));
+    } catch (error) {
+      console.log(error.response?.data || error.message);
+    }
   };
 
-  // Removes a product from the cart entirely, regardless of quantity.
-  const HandleRemoveFromCart = (productData) => {
-    setCart((prevCart) => RemoveFromCartLogic(prevCart, productData));
+  // Decreases an existing cart line's quantity by 1. If quantity would
+  // drop to 0, we remove the line entirely instead of sending qty: 0.
+  const HandleDecreaseQty = async (cartItem) => {
+    if (!isAuthenticated) {
+      setCart((prev) => {
+        if (cartItem.qty <= 1) {
+          return prev.filter((item) => item.productId !== cartItem.productId);
+        }
+        return prev.map((item) =>
+          item.productId === cartItem.productId
+            ? { ...item, qty: item.qty - 1 }
+            : item
+        );
+      });
+      return;
+    }
+
+    try {
+      const response =
+        cartItem.qty <= 1
+          ? await removeFromCart(cartItem.id)
+          : await updateCartItem(cartItem.id, cartItem.qty - 1);
+      setCart(normalizeCart(response.cart));
+    } catch (error) {
+      console.log(error.response?.data || error.message);
+    }
+  };
+
+  // Removes a cart line entirely, regardless of its quantity.
+  const HandleRemoveFromCart = async (cartItem) => {
+    if (!isAuthenticated) {
+      setCart((prev) => prev.filter((item) => item.productId !== cartItem.productId));
+      return;
+    }
+
+    try {
+      const response = await removeFromCart(cartItem.id);
+      setCart(normalizeCart(response.cart));
+    } catch (error) {
+      console.log(error.response?.data || error.message);
+    }
+  };
+
+  // Call this instead of navigate("/billing") anywhere "go to checkout"
+  // happens. Logged-in users go straight through — behavior identical to
+  // before. Guests get the modal instead of the page, and the path they
+  // wanted is remembered so Login/Register can send them there after.
+  const requireAuthForCheckout = (path = "/billing") => {
+    if (isAuthenticated) {
+      navigate(path);
+    } else {
+      setRedirectPath(path);
+      setAuthModalOpen(true);
+    }
+  };
+
+  // Login/Register call this on success. Falls back to "/" if the user
+  // arrived there some other way (not through the checkout gate).
+  const consumeRedirectPath = () => {
+    const path = redirectPath || "/";
+    setRedirectPath(null);
+    return path;
   };
 
   return (
@@ -145,11 +234,17 @@ export const ShopProvider = ({ children }) => {
         isCartOpen,
         setIsCartOpen,
         HandleAddToCart,
+        HandleIncreaseQty,
         HandleDecreaseQty,
-        HandleRemoveFromCart
+        HandleRemoveFromCart,
+        authModalOpen,
+        setAuthModalOpen,
+        requireAuthForCheckout,
+        consumeRedirectPath,
       }}
     >
       {children}
+      <AuthGateModal />
     </ShopContext.Provider>
   );
 };

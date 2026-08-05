@@ -1,12 +1,10 @@
 const express = require("express");
 const router = express.Router();
 
-const {checkout} = require("../controllers/checkoutController.cjs");
+const { checkout, getMyOrders } = require("../controllers/checkoutController.cjs");
 const authenticate = require("../middleware/authenticate.cjs");
 
-console.log("authenticate:", authenticate);
-console.log("checkout:", checkout);
-router.post("/:userId", authenticate, checkout);
-
+router.post("/", authenticate, checkout);
+router.get("/myorders", authenticate, getMyOrders);
 
 module.exports = router;

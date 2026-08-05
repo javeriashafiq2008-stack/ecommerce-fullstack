@@ -1,6 +1,7 @@
 import { useState, useContext } from "react";
 import { useNavigate } from "react-router";
 import { ShopContext } from "../components/context/ShopContext";
+import  checkout  from "../services/orderService";
 
 // ─── tiny helpers ────────────────────────────────────────────────────────────
 
@@ -162,13 +163,28 @@ export default function Billing() {
     if (validateShipping()) setActiveStep(2);
   };
 
-  const handlePlaceOrder = async () => {
-    if (!validatePayment()) return;
+const handlePlaceOrder = async () => {
+  if (!validatePayment()) return;
+
+  try {
     setPlacingOrder(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setPlacingOrder(false);
+
+    await checkout({
+      paymentMethod: "Card",
+      shippingAddress: {
+        address: shipping.address,
+        city: shipping.city,
+        postalCode: shipping.zip,
+      },
+    });
+
     setOrderPlaced(true);
-  };
+  } catch (error) {
+    console.log(error.response?.data || error.message);
+  } finally {
+    setPlacingOrder(false);
+  }
+};
 
   // ── card number formatter ──
   const formatCard = (val) =>

@@ -3,11 +3,15 @@ const { Cart, CartItem, Product } = require('../models/association.cjs');
 // 1. ADD TO CART / UPDATE QUANTITY
 const addToCart = async (req, res) => {
     try {
-        const { userId, productId, quantity } = req.body;
+       const userId = req.user.id;
+      const { productId, quantity } = req.body;
 
-        if (!userId || !productId || !quantity) {
-            return res.status(400).json({ success: false, message: "Missing required fields." });
-        }
+       if (!productId || quantity == null || quantity < 1) {
+    return res.status(400).json({
+        success: false,
+        message: "Invalid product or quantity."
+    });
+}
 
         
         let cart = await Cart.findOne({ where: { userId } });
@@ -50,11 +54,9 @@ const addToCart = async (req, res) => {
 // 2. GET USER CART
 const getCart = async (req, res) => {
     try {
-        const { userId } = req.params;
+     const userId = req.user.id;
 
-        if (!userId) {
-            return res.status(400).json({ success: false, message: "User ID is required." });
-        }
+        
 
         const cart = await Cart.findOne({ where: { userId } });
         if (!cart) {
@@ -74,10 +76,56 @@ const getCart = async (req, res) => {
     }
 };
 
+
+
+const updateCartItem = async (req, res) => {
+    try {
+        const { cartItemId, quantity } = req.body;
+
+        if (!cartItemId || quantity == null || quantity < 1) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid cart item or quantity."
+            });
+        }
+
+        const cartItem = await CartItem.findByPk(cartItemId);
+
+        if (!cartItem) {
+            return res.status(404).json({
+                success: false,
+                message: "Cart item not found."
+            });
+        }
+
+        cartItem.quantity = parseInt(quantity);
+        await cartItem.save();
+
+        const updatedCart = await CartItem.findAll({
+            where: { cartId: cartItem.cartId },
+            include: [{ model: Product }]
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: "Cart updated successfully.",
+            cart: updatedCart
+        });
+
+    } catch (error) {
+        console.error("Error updating cart:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
+    }
+};
+
 // 3. REMOVE ITEM FROM CART
 const removeFromCart = async (req, res) => {
     try {
-        const { cartItemId } = req.body;
+        const { cartItemId } = req.params;
 
         if (!cartItemId) {
             return res.status(400).json({ success: false, message: "Cart Item ID required." });
@@ -112,5 +160,6 @@ const removeFromCart = async (req, res) => {
 module.exports = {
     addToCart,
     getCart,
+    updateCartItem,
     removeFromCart
 };

@@ -34,6 +34,17 @@ const User = sequelize.define(
       allowNull: false,
       defaultValue: "buyer",
     },
+
+    profileImage: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    status: {
+      type: DataTypes.ENUM("active", "suspended"),
+      allowNull: false,
+      defaultValue: "active",
+    },
   },
   {
     timestamps: true,

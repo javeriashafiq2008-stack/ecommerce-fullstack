@@ -14,12 +14,18 @@ export default function ProductCard({
   const [wishlisted, setWishlisted] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
 
-  const handleAddToCart = (e) => {
+  const handleAddToCart = async (e) => {
     e.stopPropagation();
-    onAddToCart({ name, price, image });
-    // Brief "added" confirmation before the cart icon returns
-    setJustAdded(true);
-    setTimeout(() => setJustAdded(false), 1200);
+
+    try {
+     
+      await onAddToCart(product);
+
+      setJustAdded(true);
+      setTimeout(() => setJustAdded(false), 1200);
+    } catch (error) {
+      console.error(error.response?.data || error.message);
+    }
   };
 
   return (

@@ -1,27 +1,29 @@
 const express = require("express");
-const router = express.Router();
+const router =  express.Router();
 
 const {
   getVendorProducts,
   updateProduct,
   deleteProduct,
   createProduct,
+  getVendorOrders,
+  getVendorDashboardStats,
 } = require("../controllers/productController.cjs");
 
 const authorize = require("../middleware/authorize.cjs");
 const authenticate = require("../middleware/authenticate.cjs");
-const upload = require("../middleware/upload.cjs"); // <-- Add this
+const upload = require("../middleware/upload.cjs"); 
 
 router.post(
   "/add",
   authenticate,
   authorize("vendor"),
-  upload.single("image"), // <-- Add this
+ upload.array("images", 6),
   createProduct
 );
 
 router.get(
-  "/vendor/all",
+  "/all",
   authenticate,
   authorize("vendor"),
   getVendorProducts
@@ -31,7 +33,9 @@ router.put(
   "/update/:id",
   authenticate,
   authorize("vendor"),
+  upload.array("images", 6),
   updateProduct
+
 );
 
 router.delete(
@@ -39,6 +43,20 @@ router.delete(
   authenticate,
   authorize("vendor"),
   deleteProduct
+);
+
+router.get(
+  "/orders",
+  authenticate,
+  authorize("vendor"),
+  getVendorOrders
+);
+
+router.get(
+  "/dashboard-stats",
+  authenticate,
+  authorize("vendor"),
+  getVendorDashboardStats
 );
 
 module.exports = router;

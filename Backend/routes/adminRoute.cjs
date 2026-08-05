@@ -4,59 +4,41 @@ const router = express.Router();
 const {
   getDashboardStats,
   getAllUsers,
+  updateUser,
+  deleteUser,
   getAllProducts,
   deleteProduct,
   getAllOrders,
   updateOrderStatus,
+  getAdminProfile,
+  updateAdminProfile,
+  changeAdminPassword,
+  getAnalytics,
 } = require("../controllers/adminController.cjs");
 
 const authenticate = require("../middleware/authenticate.cjs");
 const authorize = require("../middleware/authorize.cjs");
+const uploadAvatar = require("../middleware/uploadAvatar.cjs");
 
-// Dashboard
-router.get(
-  "/dashboard",
-  authenticate,
-  authorize("admin"),
-  getDashboardStats
-);
+const adminOnly = [authenticate, authorize("admin")];
 
-// Users
-router.get(
-  "/users",
-  authenticate,
-  authorize("admin"),
-  getAllUsers
-);
+router.get("/dashboard", ...adminOnly, getDashboardStats);
+router.get("/analytics", ...adminOnly, getAnalytics);
 
-// Products
-router.get(
-  "/products",
-  authenticate,
-  authorize("admin"),
-  getAllProducts
-);
+router.get("/users", ...adminOnly, getAllUsers);
+router.put("/users/:id", ...adminOnly, updateUser);
+router.delete("/users/:id", ...adminOnly, deleteUser);
 
-router.delete(
-  "/products/:id",
-  authenticate,
-  authorize("admin"),
-  deleteProduct
-);
+router.get("/products", ...adminOnly, getAllProducts);
+router.delete("/products/:id", ...adminOnly, deleteProduct);
+router.delete("/product/:id", ...adminOnly, deleteProduct);
 
-// Orders
-router.get(
-  "/orders",
-  authenticate,
-  authorize("admin"),
-  getAllOrders
-);
+router.get("/orders", ...adminOnly, getAllOrders);
+router.put("/orders/:id/status", ...adminOnly, updateOrderStatus);
+router.put("/order/:id", ...adminOnly, updateOrderStatus);
 
-router.put(
-  "/orders/:id/status",
-  authenticate,
-  authorize("admin"),
-  updateOrderStatus
-);
+router.get("/profile", ...adminOnly, getAdminProfile);
+router.put("/profile", ...adminOnly, uploadAvatar.single("avatar"), updateAdminProfile);
+router.put("/change-password", ...adminOnly, changeAdminPassword);
 
 module.exports = router;

@@ -1,10 +1,8 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { getAllProducts, getProductDetails } = require('../controllers/catalogController.cjs'); 
-const  authenticate = require('../middleware/authenticate.cjs');
-router.get('/', authenticate, getAllProducts);
-router.get('/:id', authenticate, getProductDetails);
+const { getAllProducts, getProductDetails } = require("../controllers/catalogController.cjs");
 
-
+router.get("/", getAllProducts);
+router.get("/:id", getProductDetails);
 
 module.exports = router;
