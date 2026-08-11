@@ -75,7 +75,7 @@ export default function VendorDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F5F0] p-8">
+    <div className="min-h-screen bg-[#F7F5F0] p-4 sm:p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -149,7 +149,7 @@ export default function VendorDashboard() {
         <h2 className="text-xl font-semibold text-[#123328] mb-5">My Products</h2>
 
         {loading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="bg-white rounded-xl shadow p-4 animate-pulse">
                 <div className="w-full h-32 bg-gray-200 rounded-lg mb-4" />
@@ -176,7 +176,7 @@ export default function VendorDashboard() {
             </Link>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {products.map((product) => (
               <div
                 key={product.id}
@@ -203,7 +203,7 @@ export default function VendorDashboard() {
                     {product.title}
                   </h3>
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <button
                       onClick={() =>
                         navigate(`/edit/${product.id}`, { state: { product } })

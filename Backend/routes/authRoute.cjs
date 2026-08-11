@@ -16,7 +16,7 @@ router.post("/register", register);
 router.post("/login", login);
 router.get("/me", authenticate, getMe);
 router.post("/logout", logout);
-router.put("/profile", authenticate, uploadAvatar.single("avatar"), updateProfile);
+router.put("/update-profile", authenticate, uploadAvatar.single("avatar"), updateProfile);
 router.put("/change-password", authenticate, changePassword);
 
 module.exports = router;

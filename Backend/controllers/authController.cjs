@@ -144,17 +144,21 @@ const updateProfile = async (req, res) => {
 
     await user.update(updates);
 
+    const updatedUser = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profileImage: user.profileImage,
+      createdAt: user.createdAt,
+      status: user.status || "active",
+    };
+
     return res.status(200).json({
       success: true,
       message: "Profile updated successfully.",
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        profileImage: user.profileImage,
-        createdAt: user.createdAt,
-      },
+      data: updatedUser,
+      user: updatedUser,
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: "Server error", error: error.message });

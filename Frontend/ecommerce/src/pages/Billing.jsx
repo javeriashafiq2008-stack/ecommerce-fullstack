@@ -61,7 +61,7 @@ function SectionCard({ title, subtitle, icon, children, step, activeStep }) {
       }`}
     >
       {/* Header */}
-      <div className={`flex items-center gap-3.5 px-6 py-5 ${isDone ? "bg-green-50/50" : ""}`}>
+      <div className={`flex items-center gap-3.5 px-4 sm:px-6 py-4 sm:py-5 ${isDone ? "bg-green-50/50" : ""}`}>
         <div
           className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
             isDone || isActive ? "bg-[#0f3d2e] text-white" : "bg-gray-100 text-gray-400"
@@ -96,7 +96,7 @@ function SectionCard({ title, subtitle, icon, children, step, activeStep }) {
           isActive ? "max-h-[900px] opacity-100" : "max-h-0 opacity-0"
         } overflow-hidden`}
       >
-        <div className="px-6 pb-7 pt-1 border-t border-gray-50">{children}</div>
+        <div className="px-4 sm:px-6 pb-5 sm:pb-7 pt-1 border-t border-gray-50">{children}</div>
       </div>
     </div>
   );

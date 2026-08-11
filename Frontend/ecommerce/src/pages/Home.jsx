@@ -107,7 +107,7 @@ function Home() {
           </p>
 
           <h1
-            className={`text-5xl sm:text-7xl font-semibold text-white leading-[1.05] transition-all duration-700 ease-out ${
+            className={`text-4xl xs:text-5xl sm:text-7xl font-semibold text-white leading-[1.05] transition-all duration-700 ease-out ${
               loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
             }`}
             style={{ transitionDelay: "100ms" }}

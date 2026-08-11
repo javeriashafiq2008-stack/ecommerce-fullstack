@@ -94,14 +94,21 @@ export default function ManageProducts() {
         </div>
       ),
     },
-    { key: "title", label: "Product", render: (row) => <span className="font-medium text-gray-800">{row.title}</span> },
+    {
+      key: "title",
+      label: "Product",
+      render: (row) => (
+        <span className="font-medium text-gray-800 line-clamp-2 max-w-[180px] inline-block">{row.title}</span>
+      ),
+      wrap: true,
+    },
     {
       key: "vendor",
       label: "Vendor",
       render: (row) => (
-        <div>
+        <div className="min-w-[140px]">
           <p className="text-gray-700">{row.Vendor?.name || "Not Provided"}</p>
-          <p className="text-xs text-gray-400">{row.Vendor?.email || ""}</p>
+          <p className="text-xs text-gray-400 truncate max-w-[200px]">{row.Vendor?.email || ""}</p>
         </div>
       ),
     },
@@ -110,16 +117,18 @@ export default function ManageProducts() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f5f0ea] py-10 px-4 sm:px-6 lg:px-8 font-[Poppins]">
+    <div className="min-h-screen bg-[#f5f0ea] py-6 sm:py-10 px-3 sm:px-6 lg:px-8 font-[Poppins]">
       <div className="max-w-6xl mx-auto">
 
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">Manage Products</h1>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-900">Manage Products</h1>
             <p className="text-sm text-gray-500 mt-1">Browse listed products and remove any that violate policy.</p>
           </div>
-          <SearchBar placeholder="Search by product or vendor..." onSearch={setSearchTerm} />
+          <div className="w-full sm:w-auto">
+            <SearchBar placeholder="Search by product or vendor..." onSearch={setSearchTerm} />
+          </div>
         </div>
 
         {/* ACTION ERROR BANNER */}

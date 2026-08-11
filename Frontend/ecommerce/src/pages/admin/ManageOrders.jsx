@@ -111,9 +111,9 @@ export default function ManageOrders() {
       key: "customer",
       label: "Customer",
       render: (row) => (
-        <div>
+        <div className="min-w-[140px]">
           <p className="font-medium text-gray-800">{row.User?.name || "Not Provided"}</p>
-          <p className="text-xs text-gray-400">{row.User?.email || ""}</p>
+          <p className="text-xs text-gray-400 truncate max-w-[200px]">{row.User?.email || ""}</p>
         </div>
       ),
     },
@@ -132,16 +132,18 @@ export default function ManageOrders() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f5f0ea] py-10 px-4 sm:px-6 lg:px-8 font-[Poppins]">
+    <div className="min-h-screen bg-[#f5f0ea] py-6 sm:py-10 px-3 sm:px-6 lg:px-8 font-[Poppins]">
       <div className="max-w-6xl mx-auto">
 
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">Manage Orders</h1>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-900">Manage Orders</h1>
             <p className="text-sm text-gray-500 mt-1">Track orders and update their fulfillment status.</p>
           </div>
-          <SearchBar placeholder="Search by customer or order ID..." onSearch={setSearchTerm} />
+          <div className="w-full sm:w-auto">
+            <SearchBar placeholder="Search by customer or order ID..." onSearch={setSearchTerm} />
+          </div>
         </div>
 
         {/* ACTION ERROR BANNER */}

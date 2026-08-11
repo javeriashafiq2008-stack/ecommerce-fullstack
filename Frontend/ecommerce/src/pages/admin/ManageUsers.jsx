@@ -112,22 +112,28 @@ export default function ManageUsers() {
 
   const columns = [
     { key: "name", label: "Name", render: (row) => row.name || "Not Provided" },
-    { key: "email", label: "Email" },
+    {
+      key: "email",
+      label: "Email",
+      render: (row) => <span className="truncate max-w-[200px] inline-block align-bottom">{row.email}</span>,
+    },
     { key: "role", label: "Role", render: (row) => <StatusBadge type="role" value={row.role} /> },
     { key: "createdAt", label: "Joined", render: (row) => formatDate(row.createdAt) },
   ];
 
   return (
-    <div className="min-h-screen bg-[#f5f0ea] py-10 px-4 sm:px-6 lg:px-8 font-[Poppins]">
+    <div className="min-h-screen bg-[#f5f0ea] py-6 sm:py-10 px-3 sm:px-6 lg:px-8 font-[Poppins]">
       <div className="max-w-6xl mx-auto">
 
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">Manage Users</h1>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-900">Manage Users</h1>
             <p className="text-sm text-gray-500 mt-1">View, update roles, and remove user accounts.</p>
           </div>
-          <SearchBar placeholder="Search by name or email..." onSearch={setSearchTerm} />
+          <div className="w-full sm:w-auto">
+            <SearchBar placeholder="Search by name or email..." onSearch={setSearchTerm} />
+          </div>
         </div>
 
         {/* ACTION ERROR BANNER */}
@@ -150,7 +156,7 @@ export default function ManageUsers() {
             const isSavingRole = updatingUserId === row.id;
 
             return (
-              <div className="flex items-center justify-end gap-2">
+              <div className="flex flex-wrap items-center justify-end gap-2">
                 {/* Inline role change */}
                 <select
                   value={row.role}
@@ -158,7 +164,7 @@ export default function ManageUsers() {
                   onChange={(e) => handleRoleChange(row, e.target.value)}
                   className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 text-gray-700
                     outline-none focus:border-[#0f3d2e] focus:ring-2 focus:ring-[#0f3d2e]/15
-                    transition-all duration-200 disabled:opacity-50 capitalize"
+                    transition-all duration-200 disabled:opacity-50 capitalize min-w-[90px]"
                 >
                   {ROLE_OPTIONS.map((r) => (
                     <option key={r} value={r} className="capitalize">
@@ -166,7 +172,7 @@ export default function ManageUsers() {
                     </option>
                   ))}
                 </select>
-                {isSavingRole && <Loader2 className="w-3.5 h-3.5 text-[#0f3d2e] animate-spin" />}
+                {isSavingRole && <Loader2 className="w-3.5 h-3.5 text-[#0f3d2e] animate-spin flex-shrink-0" />}
 
                 {/* Delete */}
                 <button
@@ -174,7 +180,7 @@ export default function ManageUsers() {
                   disabled={isSelf}
                   title={isSelf ? "You can't delete your own account" : "Delete user"}
                   className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400
-                    hover:text-red-500 hover:bg-red-50 transition-all duration-200
+                    hover:text-red-500 hover:bg-red-50 transition-all duration-200 flex-shrink-0
                     disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-400"
                 >
                   <Trash2 className="w-4 h-4" />

@@ -467,7 +467,7 @@ export default function ProductDetail() {
           </div>
 
           {/* ACTIONS */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <button
               onClick={() => (cartItem ? setIsCartOpen(true) : addToCart(false))}
               className={`relative flex-1 overflow-hidden border py-3.5 rounded-full text-sm font-medium transition-all duration-300 ${

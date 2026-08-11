@@ -112,10 +112,10 @@ export default function ProductCard({
       </div>
 
       {/* CONTENT */}
-      <div className="p-4 space-y-1.5">
+      <div className="p-3 sm:p-4 space-y-1.5">
 
         {/* RATING */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1">
           {Array.from({ length: 5 }).map((_, i) => (
             <svg
               key={i}
@@ -128,24 +128,24 @@ export default function ProductCard({
               <path d="M10 1.5l2.6 5.6 6 .8-4.4 4.2 1.1 6-5.3-3-5.3 3 1.1-6L1.4 7.9l6-.8L10 1.5z" />
             </svg>
           ))}
-          <span className="text-[11px] text-gray-400 ml-1">({reviews})</span>
+          <span className="text-[11px] text-gray-400 ml-1 flex-shrink-0">({reviews})</span>
         </div>
 
         {/* NAME */}
-        <h3 className="text-sm font-medium text-gray-800 leading-snug line-clamp-2">
+        <h3 className="text-xs sm:text-sm font-medium text-gray-800 leading-snug line-clamp-2">
           {name}
         </h3>
 
         {/* PRICE + CART (small icon button stays for non-hover / touch devices) */}
         <div className="flex items-center justify-between pt-1">
-          <span className="text-sm font-semibold text-[#0f3d2e]">
+          <span className="text-xs sm:text-sm font-semibold text-[#0f3d2e]">
             {typeof price === "number" ? `$${price.toFixed(2)}` : price}
           </span>
 
           <button
             onClick={handleAddToCart}
             aria-label="Add to cart"
-            className="w-8 h-8 rounded-full flex items-center justify-center border border-[#0f3d2e]/20 hover:bg-[#0f3d2e] hover:border-[#0f3d2e] text-[#0f3d2e] hover:text-white transition-all duration-300 hover:scale-110 cursor-pointer sm:hidden"
+            className="w-9 h-9 rounded-full flex items-center justify-center border border-[#0f3d2e]/20 hover:bg-[#0f3d2e] hover:border-[#0f3d2e] text-[#0f3d2e] hover:text-white transition-all duration-300 hover:scale-110 cursor-pointer sm:hidden"
           >
             <svg
               className="w-4 h-4"

@@ -17,7 +17,8 @@ import AdminDashboard from "./pages/dashboard/adminDashboard.jsx";
 import ManageUsers from "./pages/admin/ManageUsers.jsx";
 import ManageOrders from "./pages/admin/ManageOrders.jsx";
 import ManageProducts from "./pages/admin/ManageProducts.jsx";
-import BuyerOrders from "./pages/buyersOrders.jsx";
+import BuyerOrders from "./pages/BuyersOrders.jsx";
+import Profile from "./pages/ProfilePage.jsx";
 
 
 const router= createBrowserRouter([{
@@ -144,6 +145,12 @@ const router= createBrowserRouter([{
     path:"billing",
     Component:Billing
 
+
+   },{
+       path:"/profile",
+   element:<ProtectedRoute>
+   <Profile/>
+   </ProtectedRoute>
 
    }
   

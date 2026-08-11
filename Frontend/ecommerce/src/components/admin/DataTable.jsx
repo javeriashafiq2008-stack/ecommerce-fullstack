@@ -55,7 +55,10 @@ export default function DataTable({
               data.map((row) => (
                 <tr key={row[rowKey]} className="hover:bg-[#f5f0ea]/40 transition-colors duration-150">
                   {columns.map((col) => (
-                    <td key={col.key} className="px-5 py-3.5 text-gray-700 whitespace-nowrap">
+                    <td
+                      key={col.key}
+                      className={`px-5 py-3.5 text-gray-700 ${col.wrap ? "" : "whitespace-nowrap"}`}
+                    >
                       {col.render ? col.render(row) : row[col.key] ?? "—"}
                     </td>
                   ))}
