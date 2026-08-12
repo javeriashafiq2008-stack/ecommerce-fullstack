@@ -165,7 +165,7 @@ export default function ManageOrders() {
             <select
               value={row.orderStatus}
               onChange={(e) => handleStatusSelect(row, e.target.value)}
-              className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 text-gray-700
+              className="text-xs border border-gray-200 rounded-lg px-2 py-2 text-gray-700
                 outline-none focus:border-[#0f3d2e] focus:ring-2 focus:ring-[#0f3d2e]/15
                 transition-all duration-200"
             >
