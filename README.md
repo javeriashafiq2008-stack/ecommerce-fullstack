@@ -1,4 +1,3 @@
-Copy-paste this entire thing into your `README.md`:
 
 ````markdown
 # Full-Stack E-Commerce Platform
