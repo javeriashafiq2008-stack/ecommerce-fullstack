@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { X, AlertCircle, PackageSearch, ImageOff } from "lucide-react";
 import api from "../api/axios.js";
 import DataTable from "../components/admin/DataTable.jsx";
-import StatusBadge from "../components/admin/Statusbadge.jsx";
+import StatusBadge from "../components/admin/StatusBadge.jsx";
 
 
 export default function BuyerOrders() {
