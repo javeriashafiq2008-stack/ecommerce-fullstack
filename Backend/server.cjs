@@ -7,9 +7,13 @@ const app = require("./app.cjs");
 const sequelize = require("./config/db_config.cjs");
 
 const port = process.env.PORT || 3000;
+app.get('/', (req, res) => {
+  res.send('Ecommerce API is running successfully!');
+});
 
 (async () => {
   try {
+    
     await sequelize.authenticate();
     await sequelize.sync({ force:true });
     console.log("Connection has been established successfully");
