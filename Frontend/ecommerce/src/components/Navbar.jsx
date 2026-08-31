@@ -3,20 +3,17 @@ import { Link, NavLink, useNavigate } from "react-router";
 import { ShopContext } from "./context/ShopContext";
 import { userLogout } from "../features/authentication/authenticationSlice";
 import { useDispatch, useSelector } from "react-redux";
+import { mockProducts } from "./product/mockProducts";
 import {
   Menu,
   X,
-  Home,
   ShoppingBag,
-  Info,
-  Mail,
   ClipboardList,
   Heart,
   PlusSquare,
   LayoutDashboard,
   Package,
   Users,
-  Settings,
   User,
   LogIn,
   UserPlus,
@@ -87,6 +84,26 @@ export default function Navbar() {
   const isAuthenticated = useSelector((state) => state.authentication.isAuthenticated);
   const { user } = useSelector((state) => state.authentication);
   const role = user?.role; // "buyer" | "vendor" | "admin" | undefined (guest)
+
+  // Helper to resolve cart item images, supporting backend URLs, direct image paths, and mock products fallback
+  const getCartItemImage = (item) => {
+    if (item.image) {
+      if (item.image.startsWith("http") || item.image.startsWith("blob:") || item.image.startsWith("data:")) {
+        return item.image;
+      }
+      return `http://localhost:5000/uploads/${item.image}`;
+    }
+    
+    // Fallback check against mockProducts using id or matching name
+    const foundMock = mockProducts.find(
+      (p) => p.id === item.id || p._id === item.id || p.name === item.name
+    );
+    if (foundMock?.image) {
+      return foundMock.image;
+    }
+
+    return "";
+  };
 
   // ── Cart drawer animation — unchanged ──────────────────────────────────
   useEffect(() => {
@@ -167,15 +184,15 @@ export default function Navbar() {
 
             {/* HAMBURGER + LOGO */}
             <div className="flex items-center gap-4">
-              <button
-                onClick={() => setSidebarOpen(true)}
-                aria-label="Open menu"
-                className={`text-white/90 hover:text-white transition-all duration-300 hover:scale-110 p-1 -ml-1 ${
-                  isAuthenticated ? "block" : "block md:hidden"
-                }`}
-              >
-                <Menu className="w-6 h-6" />
-              </button>
+              {isAuthenticated && (
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  aria-label="Open menu"
+                  className="text-white/90 hover:text-white transition-all duration-300 hover:scale-110 p-1 -ml-1"
+                >
+                  <Menu className="w-6 h-6" />
+                </button>
+              )}
 
               <Link to="/" className="text-2xl font-semibold text-white tracking-wide cursor-pointer">
                 Jaydor
@@ -309,9 +326,9 @@ export default function Navbar() {
             onClick={() => setIsCartOpen(false)}
           />
 
-          <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full sm:pl-10 pl-0">
+          <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
             <div
-              className={`pointer-events-auto w-screen sm:max-w-md transform bg-[#f5f0ea] shadow-xl flex flex-col transition-transform duration-300 ease-in-out ${
+              className={`pointer-events-auto w-screen max-w-md transform bg-[#f5f0ea] shadow-xl flex flex-col transition-transform duration-300 ease-in-out ${
                 isDrawerVisible ? "translate-x-0" : "translate-x-full"
               }`}
             >
@@ -343,19 +360,23 @@ export default function Navbar() {
                 ) : (
                   <div className="divide-y divide-gray-100">
                     {cart.map((item, index) => (
-                      <div key={item.id ?? item.name ?? index} className="relative flex gap-3 p-3 sm:p-4 items-start">
+                      <div key={item.id ?? item.name ?? index} className="relative flex gap-4 p-4 items-start">
                         <button
                           onClick={() => HandleRemoveFromCart(item)}
                           aria-label="Remove item"
-                          className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center text-gray-300 hover:text-[#0f3d2e] hover:bg-[#f0f7f3] transition"
+                          className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:text-[#0f3d2e] hover:bg-[#f0f7f3] transition"
                         >
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                           </svg>
                         </button>
 
-                        <img src={item.image} alt={item.name} className="w-20 h-20 object-cover rounded-xl bg-[#f0f7f3] flex-shrink-0" />
-                        <div className="flex-1 min-w-0 pr-4 sm:pr-6">
+                        <img 
+                          src={getCartItemImage(item)} 
+                          alt={item.name} 
+                          className="w-20 h-20 object-cover rounded-xl bg-[#f0f7f3] flex-shrink-0" 
+                        />
+                        <div className="flex-1 min-w-0 pr-6">
                           <h4 className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2">{item.name}</h4>
                           <p className="text-xs text-[#1a4d3c] mt-0.5">Jaydor</p>
                           <p className="text-sm font-semibold text-gray-900 mt-1.5">${Number(item.price).toFixed(2)}</p>
@@ -363,7 +384,7 @@ export default function Navbar() {
                           <div className="mt-2.5 inline-flex items-center bg-[#f5f0ea] rounded-full px-1 py-1">
                             <button
                               onClick={() => HandleDecreaseQty(item)}
-                              className="w-7 h-7 rounded-full flex items-center justify-center text-gray-500 hover:bg-white transition"
+                              className="w-6 h-6 rounded-full flex items-center justify-center text-gray-500 hover:bg-white transition"
                               aria-label="Decrease quantity"
                             >
                               <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -373,7 +394,7 @@ export default function Navbar() {
                             <span className="w-7 text-center text-sm font-medium text-gray-800">{item.qty}</span>
                             <button
                               onClick={() => HandleIncreaseQty(item)}
-                              className="w-7 h-7 rounded-full flex items-center justify-center bg-[#0f3d2e] text-white hover:bg-[#154d3b] transition"
+                              className="w-6 h-6 rounded-full flex items-center justify-center bg-[#0f3d2e] text-white hover:bg-[#154d3b] transition"
                               aria-label="Increase quantity"
                             >
                               <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -420,17 +441,7 @@ export default function Navbar() {
         </div>
       )}
 
-      {/* ── Left Sidebar Navigation ──────────────────────────────────────
-          Slides from the left, ~300px wide, dark green theme, closes on
-          outside click (overlay) and Escape, active route highlighted,
-          role-based sections rendered off Redux auth state.
-
-          Each role block below has a `key` + fadeSlide animation so that
-          when `role` changes (e.g. right after login populates the full
-          user object), the newly-mounted section fades/slides in instead
-          of just popping into place. The `key` is what forces React to
-          treat a role switch as a fresh mount rather than reusing the
-          same DOM node, which is what makes the animation replay. */}
+      {/* ── Left Sidebar Navigation ────────────────────────────────────── */}
       {shouldRenderSidebar && (
         <div className="fixed inset-0 z-50 overflow-hidden font-[Poppins]">
           <div
@@ -461,20 +472,12 @@ export default function Navbar() {
               {/* Nav sections */}
               <div className="flex-1 overflow-y-auto px-3 py-5 space-y-6">
 
-                {/* Mobile Main Navigation Links (Visible only on mobile/tablet) */}
-                <div className="md:hidden space-y-1">
-                  <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-white/35">Menu</p>
-                  <SidebarLink to="/" icon={Home} label="Home" onNavigate={closeSidebar} />
-                  <SidebarLink to="/products" icon={ShoppingBag} label="Products" onNavigate={closeSidebar} />
-                  <SidebarLink to="/about" icon={Info} label="About" onNavigate={closeSidebar} />
-                  <SidebarLink to="/contact" icon={Mail} label="Contact" onNavigate={closeSidebar} />
-                </div>
-
                 {/* BUYER — only for logged-in buyers */}
                 {role === "buyer" && (
                   <div key="buyer-section" className="space-y-1 animate-[fadeSlide_0.25s_ease-out]">
                     <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-white/35">Buyer</p>
                     <SidebarLink to="/buyer/orders" icon={ClipboardList} label="Orders" onNavigate={closeSidebar} />
+                    <SidebarLink to="/wishlist" icon={Heart} label="Wishlist" onNavigate={closeSidebar} />
                   </div>
                 )}
 
@@ -482,7 +485,9 @@ export default function Navbar() {
                 {role === "vendor" && (
                   <div key="vendor-section" className="space-y-1 animate-[fadeSlide_0.25s_ease-out]">
                     <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-white/35">Vendor</p>
+                    <SidebarLink to="/create" icon={PlusSquare} label="Create Product" onNavigate={closeSidebar} />
                     <SidebarLink to="/vendordashboard" icon={LayoutDashboard} label="Vendor Dashboard" onNavigate={closeSidebar} />
+                    <SidebarLink to="/vendor/products" icon={Package} label="My Products" onNavigate={closeSidebar} />
                   </div>
                 )}
 

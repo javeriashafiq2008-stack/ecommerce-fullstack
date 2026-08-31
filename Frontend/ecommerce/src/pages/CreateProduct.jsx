@@ -409,7 +409,7 @@ export default function CreateProduct() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-[#0f3d2e] hover:bg-[#1a4d3c] active:scale-[0.98] text-white py-3.5 rounded-full text-sm font-semibold tracking-wide transition-all duration-200 shadow-md shadow-[#0f3d2e]/25 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full bg-red-600 hover:bg-red-700 active:scale-[0.98] text-white py-3.5 rounded-full text-sm font-semibold tracking-wide transition-all duration-200 shadow-md shadow-red-600/25 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {loading ? (
                       <>

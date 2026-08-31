@@ -3,7 +3,7 @@ import { useForm, Controller } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router";
 import { useState } from "react";
-import { userRegister, userLogin } from "../features/authentication/authenticationSlice";
+import { userRegister, userLogin, checkAuthStatus } from "../features/authentication/authenticationSlice";
 
 // ─── FloatingField wrapper ────────────────────────────────────────────────────
 function FloatingField({ label, error, children }) {
@@ -172,6 +172,23 @@ function ReuseableAuthenticationForm({
   };
   // ── end original logic ────────────────────────────────────────────────────
 
+  const handleDemoLogin = async (role) => {
+    localStorage.setItem("demo_role", role);
+    localStorage.setItem("demo_mode_active", "true");
+    try {
+      await dispatch(checkAuthStatus()).unwrap();
+      if (role === "vendor") {
+        navigate("/vendordashboard");
+      } else if (role === "admin") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/");
+      }
+    } catch (e) {
+      console.error("Demo login error:", e);
+    }
+  };
+
   const isRegister = handler === "register";
 
   return (
@@ -325,6 +342,38 @@ function ReuseableAuthenticationForm({
                 ) : isRegister ? "Create Account" : "Sign In"}
               </button>
             </form>
+
+            {/* Try Demo Section */}
+            {!isRegister && (
+              <div className="border-t border-gray-150 pt-4 mt-2 space-y-3">
+                <p className="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Or Try Demo
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleDemoLogin("buyer")}
+                    className="py-2 px-1 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 bg-white hover:border-[#0f3d2e] hover:bg-[#f0f7f3] active:scale-[0.98] transition-all duration-250 cursor-pointer shadow-sm hover:shadow-md"
+                  >
+                    Buyer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDemoLogin("vendor")}
+                    className="py-2 px-1 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 bg-white hover:border-[#0f3d2e] hover:bg-[#f0f7f3] active:scale-[0.98] transition-all duration-250 cursor-pointer shadow-sm hover:shadow-md"
+                  >
+                    Vendor
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDemoLogin("admin")}
+                    className="py-2 px-1 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 bg-white hover:border-[#0f3d2e] hover:bg-[#f0f7f3] active:scale-[0.98] transition-all duration-250 cursor-pointer shadow-sm hover:shadow-md"
+                  >
+                    Admin
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* footer nav */}
             <p className="text-center text-xs text-gray-400 pt-1">

@@ -24,14 +24,7 @@ function Register() {
       name:"confirmPassword",
       type:"password",
       placeholder : "Confirm Password"
-    },
-
-    {
-  name: "role",
-  type: "select",
-  placeholder: "Role",
-}
-
+    }
   ]
 
 

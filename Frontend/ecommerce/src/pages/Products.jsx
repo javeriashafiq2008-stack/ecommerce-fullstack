@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import ProductCard from '../components/product/ProductCard';
 import { ShopContext } from '../components/context/ShopContext';
+import { mockProducts } from '../components/product/mockProducts.js';
 
 // Animates each card in with a staggered fade+slide when it enters the viewport
 function AnimatedCard({ children, index }) {
@@ -49,23 +50,34 @@ function Products() {
   const [sort, setSort] = useState("featured");
   const [search, setSearch] = useState("");
   const [sortOpen, setSortOpen] = useState(false);
-  const [headerVisible, setHeaderVisible] = useState(false);
+  const sortRef = useRef(null);
 
-  // Entrance animation for the header on mount
+  // Close dropdown on outside click
   useEffect(() => {
-    const t = setTimeout(() => setHeaderVisible(true), 50);
-    return () => clearTimeout(t);
+    const handleClickOutside = (event) => {
+      if (sortRef.current && !sortRef.current.contains(event.target)) {
+        setSortOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Filter + sort
-  const filtered = products
+  // Fallback Logic: Check if context products are loaded, otherwise fallback to mockProducts
+  const displayProducts = (products && products.length > 0) ? products : mockProducts;
+
+  // Filter + sort on displayProducts
+  const filtered = displayProducts
     .filter((p) =>
-      p.title.toLowerCase().includes(search.toLowerCase())
+      (p.title || p.name || "").toLowerCase().includes(search.toLowerCase())
     )
     .sort((a, b) => {
-      if (sort === "price_asc") return a.price - b.price;
-      if (sort === "price_desc") return b.price - a.price;
-      if (sort === "name_asc") return a.title.localeCompare(b.title);
+      const priceA = Number(a.price) || 0;
+      const priceB = Number(b.price) || 0;
+
+      if (sort === "price_asc") return priceA - priceB;
+      if (sort === "price_desc") return priceB - priceA;
+      if (sort === "name_asc") return (a.title || a.name || "").localeCompare(b.title || b.name || "");
       return 0; // featured — keep original order
     });
 
@@ -73,8 +85,6 @@ function Products() {
 
   return (
     <div className="min-h-screen bg-[#f5f0ea] font-[Poppins]">
-
-     
 
       {/* ── TOOLBAR: SEARCH + SORT ── */}
       <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm">
@@ -113,7 +123,7 @@ function Products() {
           </p>
 
           {/* Sort dropdown */}
-          <div className="relative ml-auto">
+          <div className="relative ml-auto" ref={sortRef}>
             <button
               onClick={() => setSortOpen((o) => !o)}
               className="flex items-center gap-2 text-sm text-gray-700 font-medium bg-[#f5f0ea] border border-transparent hover:border-[#0f3d2e]/20 px-4 py-2 rounded-full transition"
@@ -168,15 +178,15 @@ function Products() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
             {filtered.map((item, index) => (
               <AnimatedCard key={item.id} index={index}>
-               <ProductCard
-  product={item}
-  image={item.imageUrl}
-  name={item.title}
-  price={item.price}
-  rating={4}
-  reviews={18}
-  onAddToCart={HandleAddToCart}
-/>
+                <ProductCard
+                  product={item}
+                  image={item.image || item.imageUrl}
+                  name={item.title || item.name}
+                  price={item.price}
+                  rating={item.rating || 4}
+                  reviews={item.reviews || 18}
+                  onAddToCart={HandleAddToCart}
+                />
               </AnimatedCard>
             ))}
           </div>

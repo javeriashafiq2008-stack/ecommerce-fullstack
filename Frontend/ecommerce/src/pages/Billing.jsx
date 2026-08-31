@@ -106,7 +106,7 @@ function SectionCard({ title, subtitle, icon, children, step, activeStep }) {
 
 export default function Billing() {
   const navigate = useNavigate();
-  const { cart } = useContext(ShopContext);
+  const { cart, setCart } = useContext(ShopContext);
 
   const [activeStep, setActiveStep] = useState(1);
   const [placingOrder, setPlacingOrder] = useState(false);
@@ -178,6 +178,7 @@ const handlePlaceOrder = async () => {
       },
     });
 
+    setCart([]);
     setOrderPlaced(true);
   } catch (error) {
     console.log(error.response?.data || error.message);

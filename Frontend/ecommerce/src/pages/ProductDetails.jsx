@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { useNavigate, useParams } from "react-router";
-import { ShopContext } from "../components/context/ShopContext";
-
+import { ShopContext } from "../components/context/ShopContext.jsx"
+// Import mock products as fallback
+import { mockProducts } from '../components/product/mockProducts.js';
 
 function AccordionRow({ title, isOpen, onToggle, children }) {
   return (
@@ -35,20 +36,21 @@ function AccordionRow({ title, isOpen, onToggle, children }) {
   );
 }
 
-// Compact card used in the "You may also like" strip below the main product.
 function RelatedCard({ item, onClick }) {
   const hasMember = typeof item.memberPrice === "number";
   const [loaded, setLoaded] = useState(false);
+  const displayImg = item.imageUrl || item.image;
+
   return (
     <button
       onClick={onClick}
       className="group text-left animate-[riseIn_0.4s_ease-out]"
     >
       <div className="aspect-square bg-[#f0f7f3] overflow-hidden rounded-xl">
-        {item.imageUrl ? (
+        {displayImg ? (
           <img
-            src={item.imageUrl}
-            alt={item.title}
+            src={displayImg}
+            alt={item.title || item.name}
             loading="lazy"
             decoding="async"
             onLoad={() => setLoaded(true)}
@@ -59,13 +61,13 @@ function RelatedCard({ item, onClick }) {
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <svg className="w-10 h-10 text-[#0f3d2e]/25" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M14 8h.01M6 20h12a2 2 0 002-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
         )}
       </div>
       <p className="text-sm text-gray-800 font-medium mt-3 line-clamp-1 group-hover:text-[#0f3d2e] transition-colors">
-        {item.title}
+        {item.title || item.name}
       </p>
       <div className="flex items-center gap-2 mt-0.5">
         <p className={`text-sm ${hasMember ? "text-gray-400 line-through" : "text-gray-500"}`}>
@@ -81,26 +83,28 @@ function RelatedCard({ item, onClick }) {
   );
 }
 
-export default function ProductDetail() {
+export default function ProductDetails() {
   const { id } = useParams();
-  const {
-    products,
-    cart,
-    setIsCartOpen,
-    HandleAddToCart,
-    HandleIncreaseQty,
-    HandleDecreaseQty,
-    requireAuthForCheckout,
-  } = useContext(ShopContext);
-  const product = products.find((p) => p.id === id);
+  const context = useContext(ShopContext) || {};
+  
+  // Fallback to mockProducts if context products array is empty
+  const allProducts = (context.products && context.products.length > 0) 
+    ? context.products 
+    : (mockProducts || []);
 
-  // If this product is already sitting in the cart, the qty stepper below
-  // should drive that real cart line (same as the Navbar cart drawer) —
-  // not a separate local "amount to add" counter.
-  const cartItem = cart.find((item) => item.productId === product?.id);
+  const cart = context.cart || [];
+  const setIsCartOpen = context.setIsCartOpen || (() => {});
+  const HandleAddToCart = context.HandleAddToCart || (() => {});
+  const HandleIncreaseQty = context.HandleIncreaseQty || (() => {});
+  const HandleDecreaseQty = context.HandleDecreaseQty || (() => {});
+  const requireAuthForCheckout = context.requireAuthForCheckout;
+
+  // Search by _id OR id with string coercion
+  const product = allProducts.find((p) => String(p._id || p.id) === String(id)) || allProducts[0];
+
+  const cartItem = cart.find((item) => String(item.productId) === String(product?._id || product?.id));
 
   const [activeImage, setActiveImage] = useState(0);
-  const [prevImage, setPrevImage] = useState(0);
   const [qty, setQty] = useState(1);
   const [openSection, setOpenSection] = useState("description");
   const [wishlisted, setWishlisted] = useState(false);
@@ -108,26 +112,17 @@ export default function ProductDetail() {
   const [pulseQty, setPulseQty] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
   const [zooming, setZooming] = useState(false);
-  // NEW: tracks whether the currently-active main gallery image has
-  // actually finished loading, so the fade-in reflects real load state
-  // instead of firing on a fixed CSS animation regardless of whether the
-  // image bytes have arrived yet (which is what made loads over a slower
-  // connection look like an abrupt pop instead of a smooth reveal).
-  const [mainImageLoaded, setMainImageLoaded] = useState(false);
+  const [mainImageLoaded, setMainImageLoaded] = useState(true);
+
   const addedTimeout = useRef(null);
+  const mainImageRef = useRef(null);
   const navigate = useNavigate();
 
-  // Reset local UI state whenever the viewed product changes.
-  // NOTE: `product` is included here (not just `id`) because `products`
-  // can still be loading when this route first mounts — if we only key
-  // off `id`, this effect fires once against a possibly-undefined
-  // `product` and never re-syncs `wishlisted` once the real product
-  // data arrives.
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
     setActiveImage(0);
-    setPrevImage(0);
     setQty(1);
-    setWishlisted(product?.isFavorite ?? false);
+    if (product) setWishlisted(product.isFavorite ?? false);
   }, [id, product]);
 
   useEffect(() => () => clearTimeout(addedTimeout.current), []);
@@ -142,33 +137,22 @@ export default function ProductDetail() {
     );
   }
 
-  // Build the gallery from `imageUrl` (cover) plus `images` (the full
-  // gallery array saved from the vendor's multi-image upload), deduped
-  // and with empties filtered out — same combine+dedupe pattern used in
-  // EditProduct's fillForm.
-  //
-  // Guarded against `images` being a bare string instead of an array
-  // (legacy/bad data) — spreading a string in JS splits it into individual
-  // characters, which previously produced dozens of broken single-letter
-  // "image" entries for any product saved before images was consistently
-  // an array.
   const rawImages = Array.isArray(product.images)
     ? product.images
     : product.images
     ? [product.images]
     : [];
 
-  const gallery = [product.imageUrl, ...rawImages].filter(
+  const mainCover = product.imageUrl || product.image;
+  const gallery = [mainCover, ...rawImages].filter(
     (img, idx, arr) => Boolean(img) && arr.indexOf(img) === idx
   );
 
-  // "You may also like" — same-category items first, topped up with other
-  // products if the category doesn't have enough on its own. Capped at 4.
-  const sameCategory = products.filter(
-    (p) => p.id !== product.id && p.category === product.category
+  const sameCategory = allProducts.filter(
+    (p) => String(p._id || p.id) !== String(product._id || product.id) && p.category === product.category
   );
-  const others = products.filter(
-    (p) => p.id !== product.id && p.category !== product.category
+  const others = allProducts.filter(
+    (p) => String(p._id || p.id) !== String(product._id || product.id) && p.category !== product.category
   );
   const related = [...sameCategory, ...others].slice(0, 4);
 
@@ -182,12 +166,12 @@ export default function ProductDetail() {
 
   const changeImage = (i) => {
     if (i === activeImage) return;
-    setPrevImage(activeImage);
     setActiveImage(i);
-    // Reset the fade for the newly-selected image — it hasn't loaded yet
-    // (or may already be cached, in which case onLoad still fires
-    // synchronously enough to feel instant).
-    setMainImageLoaded(false);
+    if (mainImageRef.current && mainImageRef.current.complete) {
+      setMainImageLoaded(true);
+    } else {
+      setMainImageLoaded(false);
+    }
   };
 
   const bumpQty = (next) => {
@@ -196,9 +180,6 @@ export default function ProductDetail() {
     setTimeout(() => setPulseQty(false), 180);
   };
 
-  // The number actually shown in the stepper: the live cart quantity if
-  // this product is already in the cart, otherwise the local "amount to
-  // add" the user is staging before hitting Add to cart.
   const displayedQty = cartItem ? cartItem.qty : qty;
 
   const handleDecrease = () => {
@@ -225,26 +206,18 @@ export default function ProductDetail() {
     });
   };
 
-  // FIX: previously this sent `{ id, name, price, image, qty }`, but
-  // HandleAddToCart only ever reads `product.id` and hardcoded the
-  // quantity to 1 on the backend call — so the qty selector on this page
-  // was silently ignored. Now we pass just what's needed (id + qty) and
-  // HandleAddToCart (in ShopContext) forwards qty through to the API.
-  // See ShopContext.jsx: HandleAddToCart(product, quantity) change.
-  //
-  // "Buy now" no longer navigates straight to /billing — it routes
-  // through requireAuthForCheckout, which sends logged-in users on
-  // through exactly as before, and opens the login/register gate for
-  // guests (remembering /billing so they land back here after auth).
   const addToCart = (goToCheckout) => {
-    // If it's already a cart line, the stepper above has been editing it
-    // directly — don't add it again on top of that.
+    const prodId = product._id || product.id;
     if (!cartItem) {
-      HandleAddToCart({ id: product.id }, qty);
+      HandleAddToCart({ id: prodId }, qty);
     }
 
     if (goToCheckout) {
-      requireAuthForCheckout("/billing");
+      if (typeof requireAuthForCheckout === "function") {
+        requireAuthForCheckout("/billing");
+      } else {
+        navigate("/billing");
+      }
       return;
     }
     setJustAdded(true);
@@ -255,7 +228,6 @@ export default function ProductDetail() {
   return (
     <div className="bg-white font-[Poppins] max-w-5xl mx-auto px-4 sm:px-6 py-10">
       <div className="grid md:grid-cols-2 gap-10">
-
         {/* IMAGE GALLERY */}
         <div className="space-y-3">
           <div
@@ -266,9 +238,10 @@ export default function ProductDetail() {
           >
             {gallery.length > 0 ? (
               <img
+                ref={mainImageRef}
                 key={activeImage}
                 src={gallery[activeImage]}
-                alt={product.title}
+                alt={product.title || product.name}
                 loading="eager"
                 decoding="async"
                 onLoad={() => setMainImageLoaded(true)}
@@ -285,22 +258,11 @@ export default function ProductDetail() {
                 }
               />
             ) : (
-              <svg
-                className="w-20 h-20 text-[#0f3d2e]/30"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M14 8h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
+              <svg className="w-20 h-20 text-[#0f3d2e]/30" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M14 8h.01M6 20h12a2 2 0 002-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             )}
 
-            {/* wishlist, floating on the image */}
             <button
               onClick={() => setWishlisted((w) => !w)}
               aria-label="Add to wishlist"
@@ -315,15 +277,10 @@ export default function ProductDetail() {
                 strokeWidth="1.5"
                 viewBox="0 0 24 24"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 21s-7-4.35-9.5-8.5C.5 9 2 5.5 5.5 5c2-.3 3.5.7 4.5 2 1-1.3 2.5-2.3 4.5-2 3.5.5 5 4 3 7.5C19 16.65 12 21 12 21z"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21s-7-4.35-9.5-8.5C.5 9 2 5.5 5.5 5c2-.3 3.5.7 4.5 2 1-1.3 2.5-2.3 4.5-2 3.5.5 5 4 3 7.5C19 16.65 12 21 12 21z" />
               </svg>
             </button>
 
-            {/* image counter */}
             {gallery.length > 1 && (
               <span className="absolute bottom-3 right-3 text-[11px] font-medium text-white bg-black/40 backdrop-blur px-2 py-0.5 rounded-full">
                 {activeImage + 1} / {gallery.length}
@@ -345,7 +302,7 @@ export default function ProductDetail() {
                 >
                   <img
                     src={img}
-                    alt={`${product.title} view ${i + 1}`}
+                    alt={`${product.title || product.name} view ${i + 1}`}
                     loading="lazy"
                     decoding="async"
                     className="w-full h-full object-cover"
@@ -358,36 +315,24 @@ export default function ProductDetail() {
 
         {/* PRODUCT INFO */}
         <div className="flex flex-col animate-[riseIn_0.4s_ease-out]">
-
           {product.category && (
             <p className="text-xs uppercase tracking-wider text-[#1a4d3c] font-medium">
               {product.category}
             </p>
           )}
           <h1 className="text-3xl font-semibold text-gray-900 mt-1">
-            {product.title}
+            {product.title || product.name}
           </h1>
 
           {product.delivery && (
             <div className="flex items-center gap-2 mt-3 text-sm text-gray-500">
-              <svg
-                className="w-4 h-4 text-[#0f3d2e]"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3 7h13l4 4v6h-2M3 7v10h2m11-10v10m-11 0a2 2 0 104 0m-4 0H8m9 0a2 2 0 104 0m-4 0h-3"
-                />
+              <svg className="w-4 h-4 text-[#0f3d2e]" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 7h13l4 4v6h-2M3 7v10h2m11-10v10m-11 0a2 2 0 104 0m-4 0H8m9 0a2 2 0 104 0m-4 0h-3" />
               </svg>
               {product.delivery}
             </div>
           )}
 
-          {/* DESCRIPTION */}
           <div className="mt-6">
             <AccordionRow
               title="Description"
@@ -400,14 +345,13 @@ export default function ProductDetail() {
             </AccordionRow>
           </div>
 
-          {/* PRICING */}
           <div className="border-t border-gray-100 py-5 flex items-center gap-10">
             <div>
               <p className="text-xs text-gray-400">
                 {hasMemberPrice ? "Regular price" : "Price"}
               </p>
               <p className={`text-xl font-semibold mt-0.5 ${hasMemberPrice ? "text-gray-400 line-through decoration-1" : "text-gray-900"}`}>
-                ${Number(product.price).toFixed(2)}
+                ${Number(product.price || 0).toFixed(2)}
               </p>
             </div>
             {hasMemberPrice && (
@@ -425,7 +369,6 @@ export default function ProductDetail() {
             )}
           </div>
 
-          {/* QUANTITY + WISHLIST STATUS */}
           <div className="flex items-center gap-3 pb-5">
             <div className="inline-flex items-center bg-[#f5f0ea] rounded-full px-1 py-1">
               <button
@@ -438,11 +381,7 @@ export default function ProductDetail() {
                   <path strokeLinecap="round" d="M5 12h14" />
                 </svg>
               </button>
-              <span
-                className={`w-8 text-center text-sm font-medium text-gray-800 transition-transform duration-150 ${
-                  pulseQty ? "scale-125" : "scale-100"
-                }`}
-              >
+              <span className={`w-8 text-center text-sm font-medium text-gray-800 transition-transform duration-150 ${pulseQty ? "scale-125" : "scale-100"}`}>
                 {displayedQty}
               </span>
               <button
@@ -457,7 +396,7 @@ export default function ProductDetail() {
             </div>
 
             {wishlisted && (
-              <span className="text-xs text-[#0f3d2e] font-medium animate-[fadeIn_0.25s_ease-out] flex items-center gap-1">
+              <span className="text-xs text-[#0f3d2e] font-medium flex items-center gap-1">
                 <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 21s-7-4.35-9.5-8.5C.5 9 2 5.5 5.5 5c2-.3 3.5.7 4.5 2 1-1.3 2.5-2.3 4.5-2 3.5.5 5 4 3 7.5C19 16.65 12 21 12 21z" />
                 </svg>
@@ -466,7 +405,6 @@ export default function ProductDetail() {
             )}
           </div>
 
-          {/* ACTIONS */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <button
               onClick={() => (cartItem ? setIsCartOpen(true) : addToCart(false))}
@@ -476,18 +414,10 @@ export default function ProductDetail() {
                   : "border-[#0f3d2e] text-[#0f3d2e] hover:bg-[#f0f7f3]"
               }`}
             >
-              <span
-                className={`flex items-center justify-center gap-1.5 transition-all duration-300 ${
-                  justAdded ? "-translate-y-8 opacity-0" : "translate-y-0 opacity-100"
-                }`}
-              >
+              <span className={`flex items-center justify-center gap-1.5 transition-all duration-300 ${justAdded ? "-translate-y-8 opacity-0" : "translate-y-0 opacity-100"}`}>
                 {cartItem ? "Go to cart" : "Add to cart"}
               </span>
-              <span
-                className={`absolute inset-0 flex items-center justify-center gap-1.5 transition-all duration-300 ${
-                  justAdded ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-                }`}
-              >
+              <span className={`absolute inset-0 flex items-center justify-center gap-1.5 transition-all duration-300 ${justAdded ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
@@ -502,7 +432,6 @@ export default function ProductDetail() {
             </button>
           </div>
 
-          {/* DIMENSIONS */}
           {product.dimensions && (
             <div className="mt-2">
               <AccordionRow
@@ -522,7 +451,6 @@ export default function ProductDetail() {
             </div>
           )}
 
-          {/* FABRIC DETAILS */}
           {product.fabricDetails && (
             <AccordionRow
               title="Fabric details"
@@ -535,7 +463,6 @@ export default function ProductDetail() {
             </AccordionRow>
           )}
 
-          {/* DELIVERY & RETURNS */}
           {product.deliveryReturns && (
             <div className="border-b border-gray-100">
               <AccordionRow
@@ -549,11 +476,9 @@ export default function ProductDetail() {
               </AccordionRow>
             </div>
           )}
-
         </div>
       </div>
 
-      {/* YOU MAY ALSO LIKE */}
       {related.length > 0 && (
         <div className="mt-16 pt-10 border-t border-gray-100">
           <div className="flex items-baseline justify-between mb-6">
@@ -568,9 +493,9 @@ export default function ProductDetail() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
             {related.map((item) => (
               <RelatedCard
-                key={item.id}
+                key={item._id || item.id}
                 item={item}
-                onClick={() => navigate(`/product/${item.id}`)}
+                onClick={() => navigate(`/product/${item._id || item.id}`)}
               />
             ))}
           </div>
@@ -578,10 +503,6 @@ export default function ProductDetail() {
       )}
 
       <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
         @keyframes riseIn {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }

@@ -1,8 +1,18 @@
 import axios from "axios";
+import { isDemoModeActive, handleMockRequest } from "./mockApi.js";
 
 const api = axios.create({
-  baseURL: "https://ecommerce-backend-javeria3.vercel.app", 
- withCredentials:true,
+  baseURL: "http://localhost:3000",
+  withCredentials: true,
 });
+
+const defaultAdapter = axios.getAdapter(axios.defaults.adapter);
+
+api.defaults.adapter = async (config) => {
+  if (isDemoModeActive()) {
+    return handleMockRequest(config);
+  }
+  return defaultAdapter(config);
+};
 
 export default api;

@@ -1,4 +1,4 @@
-import api from "../api/axios.js";
+import api from "../api/axios";
 
 // Add Product to Cart
 export const addToCart = async (productId, quantity = 1) => {
