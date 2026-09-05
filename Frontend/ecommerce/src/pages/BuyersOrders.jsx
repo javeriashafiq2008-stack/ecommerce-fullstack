@@ -10,10 +10,6 @@ export default function BuyerOrders() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Selected order for the "View Order Details" overlay — null means closed.
-  // Everything the overlay needs (line items, shipping address, payment
-  // method, totals) is already present on this object, since getMyOrders
-  // includes OrderItem + Product. No second fetch required.
   const [viewOrder, setViewOrder] = useState(null);
 
   useEffect(() => {

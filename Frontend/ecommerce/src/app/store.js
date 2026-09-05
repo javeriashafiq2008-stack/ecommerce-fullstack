@@ -6,7 +6,7 @@ import vendorReducer          from "../features/vendorSlice.js";
 const store = configureStore({
   reducer: {
     authentication: authenticationReducer, 
-    vendor:         vendorReducer,          
+    vendor: vendorReducer,          
   },
 });
 
