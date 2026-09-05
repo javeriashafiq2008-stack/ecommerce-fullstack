@@ -9,10 +9,8 @@ import {
   X,
   ShoppingBag,
   ClipboardList,
-  Heart,
   PlusSquare,
   LayoutDashboard,
-  Package,
   Users,
   User,
   LogIn,
@@ -477,7 +475,6 @@ export default function Navbar() {
                   <div key="buyer-section" className="space-y-1 animate-[fadeSlide_0.25s_ease-out]">
                     <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-white/35">Buyer</p>
                     <SidebarLink to="/buyer/orders" icon={ClipboardList} label="Orders" onNavigate={closeSidebar} />
-                    <SidebarLink to="/wishlist" icon={Heart} label="Wishlist" onNavigate={closeSidebar} />
                   </div>
                 )}
 
@@ -487,7 +484,6 @@ export default function Navbar() {
                     <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-white/35">Vendor</p>
                     <SidebarLink to="/create" icon={PlusSquare} label="Create Product" onNavigate={closeSidebar} />
                     <SidebarLink to="/vendordashboard" icon={LayoutDashboard} label="Vendor Dashboard" onNavigate={closeSidebar} />
-                    <SidebarLink to="/vendor/products" icon={Package} label="My Products" onNavigate={closeSidebar} />
                   </div>
                 )}
 
