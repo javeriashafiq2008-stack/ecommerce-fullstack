@@ -2,19 +2,17 @@ import { mockProducts } from "../components/product/mockProducts.js";
 
 // Helper to determine if we are in Demo Mode
 export const isDemoModeActive = () => {
+  // If explicitly enabled via environment variable
+  if (import.meta.env.VITE_DEMO_MODE === "true") return true;
+  // If explicitly disabled via environment variable
+  if (import.meta.env.VITE_DEMO_MODE === "false") return false;
   // If explicitly logged in as demo
-  if (localStorage.getItem("demo_role")) return true;
-  // If demo mode toggle is set
-  if (localStorage.getItem("demo_mode_active") === "true") return true;
-  // If we are deployed on Vercel (hostname is not localhost or loopback)
-  if (
-    typeof window !== "undefined" &&
-    window.location.hostname !== "localhost" &&
-    window.location.hostname !== "127.0.0.1" &&
-    window.location.hostname !== ""
-  ) {
-    return true;
-  }
+  if (typeof window !== "undefined" && localStorage.getItem("demo_role")) return true;
+  // If demo mode toggle is set in localStorage
+  if (typeof window !== "undefined" && localStorage.getItem("demo_mode_active") === "true") return true;
+  // If live backend URL is provided, never default to demo mode
+  if (import.meta.env.VITE_API_BASE_URL) return false;
+
   return false;
 };
 

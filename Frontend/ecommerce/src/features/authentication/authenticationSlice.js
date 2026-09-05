@@ -24,7 +24,10 @@ export const userLogin = createAsyncThunk(
   "auth/userLogin",
   async (credentials, { rejectWithValue, dispatch }) => {
     try {
-      await api.post("/api/auth/login", credentials);
+      const response = await api.post("/api/auth/login", credentials);
+      if (response.data?.token && typeof window !== "undefined") {
+        localStorage.setItem("token", response.data.token);
+      }
       const me = await dispatch(checkAuthStatus()).unwrap();
       return me;
     } catch (error) {
@@ -34,7 +37,6 @@ export const userLogin = createAsyncThunk(
     }
   }
 );
-
 
 export const checkAuthStatus = createAsyncThunk(
   "auth/checkAuthStatus",
@@ -50,14 +52,19 @@ export const checkAuthStatus = createAsyncThunk(
   }
 );
 
-
 export const userLogout = createAsyncThunk(
   "auth/userLogout",
   async (_, { rejectWithValue }) => {
     try {
       await api.post("/api/auth/logout");
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token");
+      }
       return true;
     } catch (error) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token");
+      }
       return rejectWithValue(
         error.response?.data?.message || "Logout failed"
       );
