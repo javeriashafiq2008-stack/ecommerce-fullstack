@@ -2,17 +2,17 @@
   "version": 2,
   "builds": [
     {
-      "src": "server.cjs",
+      "src": "Backend/server.cjs",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["node_modules/mysql2/**"]
+        "includeFiles": ["Backend/node_modules/mysql2/**"]
       }
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/server.cjs"
+      "dest": "/Backend/server.cjs"
     }
   ]
 }

@@ -19,13 +19,14 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://ecommerce-fullstack-navy.vercel.app"
-];
+  "https://ecommerce-fullstack-navy.vercel.app",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin) || (typeof origin === "string" && origin.endsWith(".vercel.app"))) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
@@ -42,15 +43,50 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api/auth", authRoute);
-app.use("/api/vendor", vendorRoute);
-app.use("/api/products", catalogRoute);
-app.use("/api/cart", cartRoute);
-app.use("/api/checkout", checkoutRoute);
-app.use("/api/admin", adminRoute);
+// =========================
+// Health Check Routes (Must be before 404 handler)
+// =========================
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Ecommerce API is running successfully!",
+    timestamp: new Date().toISOString()
+  });
+});
 
+app.get("/api", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Ecommerce API is running successfully!",
+    timestamp: new Date().toISOString()
+  });
+});
+
+// =========================
+// API Routes
+// Mounted under both '/api' and '/' to ensure compatibility
+// whether Vercel serverless proxy preserves or strips the '/api' prefix
+// =========================
+const apiRouter = express.Router();
+apiRouter.use("/auth", authRoute);
+apiRouter.use("/vendor", vendorRoute);
+apiRouter.use("/products", catalogRoute);
+apiRouter.use("/cart", cartRoute);
+apiRouter.use("/checkout", checkoutRoute);
+apiRouter.use("/admin", adminRoute);
+
+app.use("/api", apiRouter);
+app.use("/", apiRouter);
+
+// =========================
+// 404 Handler (MUST be after all routes)
+// =========================
 app.use((req, res) => {
-  res.status(404).json({ message: "Route not found." });
+  res.status(404).json({
+    success: false,
+    message: "Route not found.",
+    path: req.originalUrl || req.url
+  });
 });
 
 app.use((err, req, res, next) => {

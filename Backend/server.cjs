@@ -8,11 +8,6 @@ const sequelize = require("./config/db_config.cjs");
 
 const port = process.env.PORT || 3000;
 
-// Root health check route
-app.get("/", (req, res) => {
-  res.send("Ecommerce API is running successfully!");
-});
-
 // Non-blocking database authentication (No sequelize.sync)
 sequelize
   .authenticate()
