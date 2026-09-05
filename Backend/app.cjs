@@ -3,6 +3,7 @@ const User = require("./models/userModel.cjs");
 const Product = require("./models/productModel.cjs");
 const Cart = require("./models/cartModel.cjs");
 const CartItem = require("./models/cartitemModel.cjs");
+require("./models/association.cjs");
 
 const authRoute = require("./routes/authRoute.cjs");
 const vendorRoute = require("./routes/vendorRoute.cjs");

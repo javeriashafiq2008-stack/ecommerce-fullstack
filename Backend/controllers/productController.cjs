@@ -1,7 +1,8 @@
 const Product = require("../models/productModel.cjs");
 const Order = require("../models/orderModel.cjs");
-const OrderItem = require("../models/orderItemModel.cjs");
+const OrderItem = require("../models/orderitemModel.cjs");
 const User = require("../models/userModel.cjs");
+require("../models/association.cjs");
 
 // =========================
 // Get Vendor Products
