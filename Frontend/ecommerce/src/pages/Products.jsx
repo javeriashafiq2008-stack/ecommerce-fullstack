@@ -45,7 +45,7 @@ const SORT_OPTIONS = [
 ];
 
 function Products() {
-  const { products, HandleAddToCart } = useContext(ShopContext);
+  const { products, productsError, refetchProducts, HandleAddToCart } = useContext(ShopContext);
 
   const [sort, setSort] = useState("featured");
   const [search, setSearch] = useState("");
@@ -160,6 +160,29 @@ function Products() {
           </div>
         </div>
       </div>
+
+      {/* ── API ERROR BANNER (non-blocking, shows when live products failed to load) ── */}
+      {productsError && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
+            <div className="flex items-center gap-2 min-w-0">
+              <svg className="w-4 h-4 flex-shrink-0 text-amber-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+              <span className="truncate">
+                <strong>Could not load live products</strong> — showing sample catalog.{" "}
+                <span className="font-normal opacity-80">{productsError}</span>
+              </span>
+            </div>
+            <button
+              onClick={refetchProducts}
+              className="flex-shrink-0 text-xs font-semibold text-amber-900 border border-amber-300 bg-white hover:bg-amber-100 px-3 py-1.5 rounded-full transition"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── GRID ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

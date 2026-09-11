@@ -2,6 +2,13 @@
   "version": 2,
   "builds": [
     {
+      "src": "Frontend/ecommerce/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    },
+    {
       "src": "Backend/server.cjs",
       "use": "@vercel/node",
       "config": {
@@ -11,8 +18,19 @@
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/api/(.*)",
       "dest": "/Backend/server.cjs"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "/Frontend/ecommerce/dist/assets/$1"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/Frontend/ecommerce/dist/index.html"
     }
   ]
 }

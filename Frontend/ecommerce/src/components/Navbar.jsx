@@ -242,7 +242,11 @@ export default function Navbar() {
             <div className="flex items-center space-x-5 relative">
 
               {/* CART */}
-              <div onClick={() => setIsCartOpen(!isCartOpen)} className="relative cursor-pointer group">
+              <button
+                onClick={() => setIsCartOpen(!isCartOpen)}
+                aria-label={`Open cart, ${cart.reduce((sum, item) => sum + Number(item?.qty || 1), 0)} items`}
+                className="relative cursor-pointer group p-2 rounded-full hover:bg-white/10 transition-colors touch-manipulation -mr-2"
+              >
                 <svg
                   className="w-5 h-5 text-white/90 group-hover:text-white transition-all duration-300 group-hover:scale-110 group-hover:-rotate-6"
                   fill="none"
@@ -253,10 +257,10 @@ export default function Navbar() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 7h12l1 14H5L6 7z" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 7V5a3 3 0 016 0v2" />
                 </svg>
-                <span className="absolute -top-2 -right-2 bg-white text-black text-xs rounded-full px-1.5 font-bold">
+                <span className="pointer-events-none absolute -top-1 -right-1 bg-white text-black text-xs rounded-full px-1.5 font-bold leading-tight min-w-[18px] text-center">
                   {cart.reduce((sum, item) => sum + Number(item?.qty || 1), 0) || 0}
                 </span>
-              </div>
+              </button>
 
               {/* ACCOUNT DROPDOWN */}
               <div className="relative">

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useRef } from "react";
+import React, { createContext, useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router";
 import { useSelector } from "react-redux";
 import api from "../../api/axios.js";
@@ -27,6 +27,7 @@ export const ShopProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [products, setProducts] = useState([]);
+  const [productsError, setProductsError] = useState(null);
 
   // ── Guest checkout gate ────────────────────────────────────────────────
   // authModalOpen: controls the "please log in" modal.
@@ -40,27 +41,32 @@ export const ShopProvider = ({ children }) => {
   const navigate = useNavigate();
   const isAuthenticated = useSelector((state) => state.authentication.isAuthenticated);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await api.get("/api/products");
+  const refetchProducts = useCallback(async () => {
+    setProductsError(null);
+    try {
+      const response = await api.get("/api/products");
 
-        const parsedProducts = response.data.data.map(product => ({
-          ...product,
-          images:
-            typeof product.images === "string"
-              ? JSON.parse(product.images)
-              : product.images,
-        }));
+      const parsedProducts = response.data.data.map((product) => ({
+        ...product,
+        images:
+          typeof product.images === "string"
+            ? JSON.parse(product.images)
+            : product.images,
+      }));
 
-        setProducts(parsedProducts);
-      } catch (error) {
-        console.log(error.response?.data || error.message);
-      }
-    };
-
-    fetchProducts();
+      setProducts(parsedProducts);
+    } catch (error) {
+      console.error("[ShopContext] Failed to load products:", error.response?.data || error.message);
+      setProductsError(
+        error.response?.data?.message ||
+          "Could not reach the server. Check your connection and try again."
+      );
+    }
   }, []);
+
+  useEffect(() => {
+    refetchProducts();
+  }, [refetchProducts]);
 
   // ── Guest cart → server cart merge ──────────────────────────────────────
   // The backend's /api/cart routes require a valid auth cookie (see
@@ -229,6 +235,8 @@ export const ShopProvider = ({ children }) => {
     <ShopContext.Provider
       value={{
         products,
+        productsError,
+        refetchProducts,
         cart,
         setCart,
         isCartOpen,

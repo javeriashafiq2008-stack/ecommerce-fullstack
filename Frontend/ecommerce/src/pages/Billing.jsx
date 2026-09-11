@@ -111,6 +111,7 @@ export default function Billing() {
   const [activeStep, setActiveStep] = useState(1);
   const [placingOrder, setPlacingOrder] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [orderError, setOrderError] = useState("");
 
   // ── shipping form ──
   const [shipping, setShipping] = useState({
@@ -167,6 +168,7 @@ const handlePlaceOrder = async () => {
   if (!validatePayment()) return;
 
   try {
+    setOrderError("");
     setPlacingOrder(true);
 
     await checkout({
@@ -181,7 +183,11 @@ const handlePlaceOrder = async () => {
     setCart([]);
     setOrderPlaced(true);
   } catch (error) {
-    console.log(error.response?.data || error.message);
+    console.error("[Billing] Checkout failed:", error.response?.data || error.message);
+    setOrderError(
+      error.response?.data?.message ||
+        "Something went wrong while placing your order. Please try again."
+    );
   } finally {
     setPlacingOrder(false);
   }
@@ -359,6 +365,16 @@ const handlePlaceOrder = async () => {
                 Dummy — no real charge
               </span>
             </div>
+
+            {/* Checkout error banner */}
+            {orderError && (
+              <div className="mt-4 flex items-start gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                <svg className="w-4 h-4 flex-shrink-0 mt-0.5 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0 3.75h.008M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{orderError}</span>
+              </div>
+            )}
 
             <button
               onClick={handlePlaceOrder}
