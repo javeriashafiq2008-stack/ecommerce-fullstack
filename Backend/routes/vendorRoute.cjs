@@ -23,9 +23,9 @@ router.post(
 );
 
 router.get(
-  "/all",
+  ["/all", "/products", "/"],
   authenticate,
-  authorize("vendor"),
+  authorize("vendor", "admin"),
   getVendorProducts
 );
 

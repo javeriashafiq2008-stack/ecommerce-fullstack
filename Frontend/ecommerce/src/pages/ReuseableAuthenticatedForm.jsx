@@ -2,8 +2,9 @@ import ReactDatePicker from "react-datepicker";
 import { useForm, Controller } from "react-hook-form";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router";
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { userRegister, userLogin, checkAuthStatus } from "../features/authentication/authenticationSlice";
+import { ShopContext } from "../components/context/ShopContext";
 
 // ─── FloatingField wrapper ────────────────────────────────────────────────────
 function FloatingField({ label, error, children }) {
@@ -129,6 +130,7 @@ function ReuseableAuthenticationForm({
 }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const shopContext = useContext(ShopContext);
   const [serverError, setServerError] = useState("");
 
   // ── all original logic untouched ──────────────────────────────────────────
@@ -145,6 +147,7 @@ function ReuseableAuthenticationForm({
   const onSubmit = async (data) => {
     setServerError("");
     try {
+      const destination = shopContext?.consumeRedirectPath ? shopContext.consumeRedirectPath() : "/";
       if (handler === "register") {
         await dispatch(
           userRegister({
@@ -155,10 +158,10 @@ function ReuseableAuthenticationForm({
           })
         ).unwrap();
         await dispatch(userLogin({ email: data.email, password: data.password })).unwrap();
-        navigate("/");
+        navigate(destination);
       } else if (handler === "login") {
         await dispatch(userLogin({ email: data.email, password: data.password })).unwrap();
-        navigate("/");
+        navigate(destination);
       }
     } catch (error) {
       if (handler === "login") {

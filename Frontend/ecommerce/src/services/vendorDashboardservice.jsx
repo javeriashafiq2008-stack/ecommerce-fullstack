@@ -3,7 +3,7 @@ import api from "../api/axios";
 // All vendor-related API calls live here so components
 // don't talk to axios directly.
 
-export const getVendorProducts = () => api.get("/api/vendor/all");
+export const getVendorProducts = (params) => api.get("/api/vendor/all", { params });
 
 export const addVendorProduct = (data) => api.post("/api/vendor/add", data);
 

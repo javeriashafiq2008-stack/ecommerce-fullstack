@@ -31,24 +31,42 @@ const checkout = async (req, res) => {
       });
     }
 
-    const cart = await Cart.findOne({
+    let cart = await Cart.findOne({
       where: { userId },
       transaction,
     });
 
     if (!cart) {
-      await transaction.rollback();
-      return res.status(404).json({
-        success: false,
-        message: "Cart not found.",
-      });
+      cart = await Cart.create({ userId }, { transaction });
     }
 
-    const cartItems = await CartItem.findAll({
+    let cartItems = await CartItem.findAll({
       where: { cartId: cart.id },
       include: [{ model: Product }],
       transaction,
     });
+
+    if (cartItems.length === 0 && Array.isArray(req.body.items) && req.body.items.length > 0) {
+      for (const item of req.body.items) {
+        const pId = item.productId || item.id;
+        const pQty = Number(item.qty || item.quantity || 1);
+        if (pId) {
+          await CartItem.create(
+            {
+              cartId: cart.id,
+              productId: pId,
+              quantity: pQty,
+            },
+            { transaction }
+          );
+        }
+      }
+      cartItems = await CartItem.findAll({
+        where: { cartId: cart.id },
+        include: [{ model: Product }],
+        transaction,
+      });
+    }
 
     if (cartItems.length === 0) {
       await transaction.rollback();

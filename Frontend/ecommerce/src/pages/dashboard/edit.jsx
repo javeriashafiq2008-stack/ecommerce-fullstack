@@ -41,7 +41,8 @@ export default function EditProduct() {
     const fetchProduct = async () => {
       try {
         const res = await getVendorProducts();
-        const found = (res.data.data || []).find((p) => p.id === id);
+        const list = Array.isArray(res.data) ? res.data : (res.data?.data || res.data?.products || []);
+        const found = list.find((p) => String(p.id) === String(id));
         if (found) {
           fillForm(found);
         } else {

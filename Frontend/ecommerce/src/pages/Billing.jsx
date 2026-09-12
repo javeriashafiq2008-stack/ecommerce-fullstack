@@ -106,7 +106,7 @@ function SectionCard({ title, subtitle, icon, children, step, activeStep }) {
 
 export default function Billing() {
   const navigate = useNavigate();
-  const { cart, setCart } = useContext(ShopContext);
+  const { cart, setCart, clearCart } = useContext(ShopContext);
 
   const [activeStep, setActiveStep] = useState(1);
   const [placingOrder, setPlacingOrder] = useState(false);
@@ -128,12 +128,12 @@ export default function Billing() {
 
   // ── totals ──
   const subtotal = cart.reduce(
-    (sum, item) => sum + Number(item?.price || 0) * Number(item?.qty || 1),
+    (sum, item) => sum + Number(item?.price ?? item?.Product?.price ?? 0) * Number(item?.qty ?? item?.quantity ?? 1),
     0
   );
   const shipping_fee = cart.length > 0 ? 5.00 : 0;
   const total = subtotal + shipping_fee;
-  const totalQty = cart.reduce((sum, item) => sum + Number(item?.qty || 1), 0);
+  const totalQty = cart.reduce((sum, item) => sum + Number(item?.qty ?? item?.quantity ?? 1), 0);
 
   // ── validation helpers ──
   const validateShipping = () => {
@@ -178,9 +178,17 @@ const handlePlaceOrder = async () => {
         city: shipping.city,
         postalCode: shipping.zip,
       },
+      items: cart,
     });
 
-    setCart([]);
+    if (clearCart) {
+      clearCart();
+    } else {
+      setCart([]);
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("cart");
+      }
+    }
     setOrderPlaced(true);
   } catch (error) {
     console.error("[Billing] Checkout failed:", error.response?.data || error.message);
@@ -421,22 +429,28 @@ const handlePlaceOrder = async () => {
                   </button>
                 </div>
               ) : (
-                cart.map((item, i) => (
-                  <div key={item.id ?? i} className="flex gap-3 px-6 py-4 items-center">
-                    <div className="w-14 h-14 rounded-xl bg-[#f0f7f3] overflow-hidden flex-shrink-0">
-                      {item.image && (
-                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                      )}
+                cart.map((item, i) => {
+                  const itemQty = Number(item?.qty ?? item?.quantity ?? 1);
+                  const itemPrice = Number(item?.price ?? item?.Product?.price ?? 0);
+                  const itemImg = item?.image || item?.Product?.imageUrl || item?.Product?.image || "";
+                  const itemName = item?.name || item?.Product?.title || item?.title || "Product";
+                  return (
+                    <div key={item.id ?? i} className="flex gap-3 px-6 py-4 items-center">
+                      <div className="w-14 h-14 rounded-xl bg-[#f0f7f3] overflow-hidden flex-shrink-0">
+                        {itemImg && (
+                          <img src={itemImg} alt={itemName} className="w-full h-full object-cover" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-800 line-clamp-1">{itemName}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">Qty: {itemQty}</p>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900 flex-shrink-0">
+                        ${(itemPrice * itemQty).toFixed(2)}
+                      </p>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 line-clamp-1">{item.name}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">Qty: {item.qty}</p>
-                    </div>
-                    <p className="text-sm font-semibold text-gray-900 flex-shrink-0">
-                      ${(Number(item.price) * Number(item.qty)).toFixed(2)}
-                    </p>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 

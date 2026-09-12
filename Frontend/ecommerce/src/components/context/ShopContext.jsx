@@ -12,19 +12,31 @@ import AuthGateModal from "../AuthGateModal.jsx";
 
 export const ShopContext = createContext();
 
-const normalizeCartItem = (item) => ({
-  id: item.id,
-  productId: item.productId,
-  qty: item.quantity,
-  name: item.Product?.title,
-  price: item.Product?.price,
-  image: item.Product?.imageUrl,
-});
+const normalizeCartItem = (item) => {
+  if (!item) return null;
+  const product = item.Product || {};
+  return {
+    id: item.id ?? item.productId ?? product.id,
+    productId: item.productId ?? product.id ?? item.id,
+    qty: Number(item.qty ?? item.quantity ?? 1),
+    name: item.name ?? product.title ?? product.name ?? item.title ?? "Product",
+    price: Number(item.price ?? product.price ?? 0),
+    image: item.image ?? product.imageUrl ?? product.image ?? item.imageUrl ?? "",
+    Product: item.Product,
+  };
+};
 
-const normalizeCart = (rawCart) => (rawCart || []).map(normalizeCartItem);
+const normalizeCart = (rawCart) => (rawCart || []).map(normalizeCartItem).filter(Boolean);
 
 export const ShopProvider = ({ children }) => {
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(() => {
+    try {
+      const saved = typeof window !== "undefined" ? localStorage.getItem("cart") : null;
+      return saved ? normalizeCart(JSON.parse(saved)) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [products, setProducts] = useState([]);
   const [productsError, setProductsError] = useState(null);
@@ -68,15 +80,38 @@ export const ShopProvider = ({ children }) => {
     refetchProducts();
   }, [refetchProducts]);
 
+  // Sync cart to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("cart", JSON.stringify(cart));
+      }
+    } catch (e) {
+      console.error("[ShopContext] Failed to persist cart:", e);
+    }
+  }, [cart]);
+
+  // ── Server cart sync ───────────────────────────────────────────────────
+  const syncServerCart = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const response = await getCart();
+      const serverItems = response?.cart || [];
+      if (Array.isArray(serverItems) && serverItems.length > 0) {
+        setCart(normalizeCart(serverItems));
+      }
+    } catch (error) {
+      console.log("[ShopContext] Failed to load server cart:", error.response?.data || error.message);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      syncServerCart();
+    }
+  }, [isAuthenticated, syncServerCart]);
+
   // ── Guest cart → server cart merge ──────────────────────────────────────
-  // The backend's /api/cart routes require a valid auth cookie (see
-  // authenticate middleware), so while isAuthenticated is false, cart
-  // reads/writes below never touch the API — they operate on local state
-  // only. The moment isAuthenticated flips false → true (successful login
-  // or register), whatever was staged locally gets replayed through the
-  // real addToCart API one line at a time, and `cart` is swapped over to
-  // the server-normalized version. Components never see this switch —
-  // they just keep reading `cart` the same way.
   const cartRef = useRef(cart);
   useEffect(() => {
     cartRef.current = cart;
@@ -89,7 +124,10 @@ export const ShopProvider = ({ children }) => {
 
     if (!wasAuthenticated && isAuthenticated) {
       const guestItems = cartRef.current;
-      if (guestItems.length === 0) return;
+      if (guestItems.length === 0) {
+        syncServerCart();
+        return;
+      }
 
       const mergeGuestCart = async () => {
         let latestCart = null;
@@ -101,12 +139,16 @@ export const ShopProvider = ({ children }) => {
             console.log(error.response?.data || error.message);
           }
         }
-        if (latestCart) setCart(normalizeCart(latestCart));
+        if (latestCart) {
+          setCart(normalizeCart(latestCart));
+        } else {
+          syncServerCart();
+        }
       };
 
       mergeGuestCart();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, syncServerCart]);
 
   const HandleAddToCart = async (product, quantity = 1) => {
     if (!isAuthenticated) {
@@ -231,6 +273,17 @@ export const ShopProvider = ({ children }) => {
     return path;
   };
 
+  const clearCart = () => {
+    setCart([]);
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("cart");
+      }
+    } catch (e) {
+      // ignore
+    }
+  };
+
   return (
     <ShopContext.Provider
       value={{
@@ -239,6 +292,7 @@ export const ShopProvider = ({ children }) => {
         refetchProducts,
         cart,
         setCart,
+        clearCart,
         isCartOpen,
         setIsCartOpen,
         HandleAddToCart,

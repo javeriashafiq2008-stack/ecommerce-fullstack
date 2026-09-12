@@ -120,6 +120,7 @@ export async function handleMockRequest(config) {
   initMockDb();
 
   const url = config.url || "";
+  const cleanUrl = url.split("?")[0];
   const method = (config.method || "get").toLowerCase();
   
   let parsedData = {};
@@ -172,7 +173,7 @@ export async function handleMockRequest(config) {
   const role = localStorage.getItem("demo_role") || "buyer";
 
   // 1. Authentication endpoints
-  if (url === "/api/auth/me") {
+  if (cleanUrl === "/api/auth/me") {
     const loggedInRole = localStorage.getItem("demo_role");
     if (!loggedInRole) {
       return errorResponse("Not authenticated", 401);
@@ -189,7 +190,7 @@ export async function handleMockRequest(config) {
     });
   }
 
-  if (url === "/api/auth/login") {
+  if (cleanUrl === "/api/auth/login") {
     const targetRole = role;
     localStorage.setItem("demo_role", targetRole);
     return successResponse({
@@ -204,7 +205,7 @@ export async function handleMockRequest(config) {
     });
   }
 
-  if (url === "/api/auth/register") {
+  if (cleanUrl === "/api/auth/register") {
     const regRole = parsedData.role || "buyer";
     localStorage.setItem("demo_role", regRole);
     return successResponse({
@@ -217,13 +218,13 @@ export async function handleMockRequest(config) {
     });
   }
 
-  if (url === "/api/auth/logout") {
+  if (cleanUrl === "/api/auth/logout") {
     localStorage.removeItem("demo_role");
     localStorage.removeItem("demo_mode_active");
     return successResponse({ success: true, message: "Logged out successfully" });
   }
 
-  if (url === "/api/auth/update-profile") {
+  if (cleanUrl === "/api/auth/update-profile") {
     const updatedName = getFormDataValue(parsedData, "name") || `Demo ${role}`;
     return successResponse({
       success: true,
@@ -239,16 +240,16 @@ export async function handleMockRequest(config) {
   }
 
   // 2. Products Catalog endpoint
-  if (url === "/api/products" && method === "get") {
+  if (cleanUrl === "/api/products" && method === "get") {
     return successResponse({ success: true, data: getProducts() });
   }
 
   // 3. Cart endpoints
-  if (url === "/api/cart" && method === "get") {
+  if (cleanUrl === "/api/cart" && method === "get") {
     return successResponse({ success: true, cart: getCart() });
   }
 
-  if (url === "/api/cart/addtocart" && method === "post") {
+  if (cleanUrl === "/api/cart/addtocart" && method === "post") {
     const productId = Number(parsedData.productId);
     const quantity = Number(parsedData.quantity || 1);
     
@@ -277,7 +278,7 @@ export async function handleMockRequest(config) {
     return successResponse({ success: true, cart });
   }
 
-  if (url === "/api/cart/update" && method === "patch") {
+  if (cleanUrl === "/api/cart/update" && method === "patch") {
     const cartItemId = parsedData.cartItemId;
     const quantity = Number(parsedData.quantity);
 
@@ -291,8 +292,8 @@ export async function handleMockRequest(config) {
     return errorResponse("Cart item not found");
   }
 
-  if (url.startsWith("/api/cart/remove/") && method === "delete") {
-    const cartItemId = url.split("/").pop();
+  if (cleanUrl.startsWith("/api/cart/remove/") && method === "delete") {
+    const cartItemId = cleanUrl.split("/").pop();
     let cart = getCart();
     cart = cart.filter((item) => item.id !== cartItemId);
     setCart(cart);
@@ -300,12 +301,25 @@ export async function handleMockRequest(config) {
   }
 
   // 4. Checkout / Orders endpoints
-  if (url === "/api/checkout" && method === "post") {
-    const { shippingAddress, paymentMethod } = parsedData;
-    const cart = getCart();
+  if (cleanUrl === "/api/checkout" && method === "post") {
+    const { shippingAddress, paymentMethod, items } = parsedData;
+    let cart = getCart();
+    if (cart.length === 0 && Array.isArray(items) && items.length > 0) {
+      cart = items.map((it) => ({
+        id: it.id || `cart-item-${Date.now()}`,
+        productId: it.productId || it.id,
+        quantity: Number(it.qty || it.quantity || 1),
+        Product: {
+          id: it.productId || it.id,
+          title: it.name || it.Product?.title || "Product",
+          price: Number(it.price ?? it.Product?.price ?? 0),
+          imageUrl: it.image || it.Product?.imageUrl || "",
+        },
+      }));
+    }
     if (cart.length === 0) return errorResponse("Cart is empty");
 
-    const totalAmount = cart.reduce((sum, item) => sum + item.quantity * item.Product.price, 0) + 5.0;
+    const totalAmount = cart.reduce((sum, item) => sum + Number(item.quantity || 1) * Number(item.Product?.price || item.price || 0), 0) + 5.0;
 
     const newOrder = {
       id: `demo-order-${Date.now()}`,
@@ -323,11 +337,11 @@ export async function handleMockRequest(config) {
       OrderItems: cart.map((item, index) => ({
         id: `item-${Date.now()}-${index}`,
         productId: item.productId,
-        quantity: item.quantity,
-        price: item.Product.price,
+        quantity: Number(item.quantity || 1),
+        price: Number(item.Product?.price || item.price || 0),
         Product: {
-          title: item.Product.title,
-          imageUrl: item.Product.imageUrl,
+          title: item.Product?.title || item.name || "Product",
+          imageUrl: item.Product?.imageUrl || item.image || "",
         },
       })),
     };
@@ -341,15 +355,19 @@ export async function handleMockRequest(config) {
     return successResponse({ success: true, message: "Order placed successfully", order: newOrder });
   }
 
-  if (url === "/api/checkout/myorders" && method === "get") {
+  if (cleanUrl === "/api/checkout/myorders" && method === "get") {
     const orders = getOrders().filter((o) => o.User?.id === "demo-buyer-id");
     return successResponse({ success: true, orders });
   }
 
   // 5. Vendor Dashboard endpoints
-  if (url === "/api/vendor/all" && method === "get") {
-    const products = getProducts().filter((p) => p.VendorId === "demo-vendor-id");
-    return successResponse({ success: true, data: products });
+  if ((cleanUrl === "/api/vendor/all" || cleanUrl === "/api/vendor/products" || cleanUrl === "/api/vendor") && method === "get") {
+    const allProducts = getProducts();
+    const vendorRole = localStorage.getItem("demo_role");
+    const products = allProducts.filter(
+      (p) => p.VendorId === "demo-vendor-id" || p.vendor_id === "demo-vendor-id" || !p.VendorId || vendorRole === "vendor"
+    );
+    return successResponse({ success: true, data: products, products });
   }
 
   if (url === "/api/vendor/add" && method === "post") {

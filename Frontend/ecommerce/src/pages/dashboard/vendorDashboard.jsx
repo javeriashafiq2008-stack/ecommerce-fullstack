@@ -32,10 +32,20 @@ export default function VendorDashboard() {
 
     try {
       const res = await getVendorProducts();
-      setProducts(res.data.data || []);
+      const productList = Array.isArray(res.data)
+        ? res.data
+        : (res.data?.data || res.data?.products || []);
+      setProducts(productList);
     } catch (err) {
-      console.log(err.response?.data || err.message);
-      setError("Unable to load products.");
+      console.error("[VendorDashboard] Failed to load products:", err.response?.data || err.message);
+      const errorMessage =
+        err.response?.data?.message ||
+        (err.response?.status === 401
+          ? "Please log in to view your vendor dashboard."
+          : err.response?.status === 403
+          ? "You do not have vendor permissions."
+          : "Failed to load Products");
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -185,8 +195,8 @@ export default function VendorDashboard() {
               >
                 <div className="relative h-32 bg-[#F7F5F0] overflow-hidden">
                   <img
-                    src={product.imageUrl || IMAGE_FALLBACK}
-                    alt={product.title}
+                    src={product.imageUrl || (Array.isArray(product.images) && product.images[0]) || product.image || IMAGE_FALLBACK}
+                    alt={product.title || product.name || "Product"}
                     onError={(e) => {
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = IMAGE_FALLBACK;
@@ -194,13 +204,13 @@ export default function VendorDashboard() {
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   <span className="absolute top-2 right-2 bg-white/95 text-[#123328] text-xs font-bold px-2.5 py-1 rounded-full shadow">
-                    ${Number(product.price).toFixed(2)}
+                    ${Number(product.price || 0).toFixed(2)}
                   </span>
                 </div>
 
                 <div className="p-3">
                   <h3 className="font-medium text-sm text-gray-800 truncate mb-2.5">
-                    {product.title}
+                    {product.title || product.name || "Product"}
                   </h3>
 
                   <div className="flex flex-col sm:flex-row gap-2">

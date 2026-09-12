@@ -9,8 +9,8 @@ export const addProduct = (formData) =>
   });
 
 // Get Vendor Products
-export const getVendorProducts = () =>
-  API.get("/api/vendor/all");
+export const getVendorProducts = (params) =>
+  API.get("/api/vendor/all", { params });
 
 // Update Product
 export const updateProduct = (id, formData) =>

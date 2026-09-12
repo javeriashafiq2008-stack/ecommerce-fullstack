@@ -9,10 +9,13 @@ require("../models/association.cjs");
 // =========================
 const getVendorProducts = async (req, res) => {
     try {
-        const vendorId = req.user.id;
+        const vendorId = req.query?.vendorId || req.user?.id;
+        const where = req.user?.role === "admin" && !req.query?.vendorId
+            ? {}
+            : { vendor_id: vendorId };
 
         const products = await Product.findAll({
-            where: { vendor_id: vendorId },
+            where,
             order: [["createdAt", "DESC"]]
         });
 
