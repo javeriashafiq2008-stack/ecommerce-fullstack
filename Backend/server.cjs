@@ -8,21 +8,18 @@ const sequelize = require("./config/db_config.cjs");
 
 const port = process.env.PORT || 3000;
 
-// Ensure DB connection is established lazily per serverless execution
 let isConnected = false;
 
 app.use(async (req, res, next) => {
   if (!isConnected) {
     try {
-      
       await sequelize.authenticate();
       
-      if (process.env.NODE_ENV !== "production") {
-        await sequelize.sync({ alter: true });
-      }
+      // Temporarily sync tables on live environment
+      await sequelize.sync({ alter: true });
       
       isConnected = true;
-      console.log("Database connected successfully.");
+      console.log("Database connected and tables synced successfully.");
     } catch (error) {
       console.error("Unable to connect to the Database:", error.message);
       return res.status(500).json({ error: "Database connection failed" });
@@ -31,7 +28,6 @@ app.use(async (req, res, next) => {
   next();
 });
 
-// Local development server listener
 if (process.env.NODE_ENV !== "production") {
   app.listen(port, () => {
     console.log(`Server is working on port ${port}`);
