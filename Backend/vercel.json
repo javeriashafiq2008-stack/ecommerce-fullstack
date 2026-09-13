@@ -1,18 +1,12 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "server.cjs",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["node_modules/mysql2/**"]
-      }
-    }
-  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "/server.cjs"
+    },
+    {
+      "handle": "filesystem"
     },
     {
       "source": "/(.*)",

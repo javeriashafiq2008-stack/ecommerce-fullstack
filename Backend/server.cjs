@@ -8,16 +8,30 @@ const sequelize = require("./config/db_config.cjs");
 
 const port = process.env.PORT || 3000;
 
-// Automatically sync database tables on startup (bypasses local network bottlenecks)
-sequelize
-  .sync({ alter: true })
-  .then(() => {
-    console.log("Database connection established and tables synchronized successfully.");
-  })
-  .catch((error) => {
-    console.error("Unable to connect or sync the Database:", error.message);
-  });
+// Ensure DB connection is established lazily per serverless execution
+let isConnected = false;
 
+app.use(async (req, res, next) => {
+  if (!isConnected) {
+    try {
+      
+      await sequelize.authenticate();
+      
+      if (process.env.NODE_ENV !== "production") {
+        await sequelize.sync({ alter: true });
+      }
+      
+      isConnected = true;
+      console.log("Database connected successfully.");
+    } catch (error) {
+      console.error("Unable to connect to the Database:", error.message);
+      return res.status(500).json({ error: "Database connection failed" });
+    }
+  }
+  next();
+});
+
+// Local development server listener
 if (process.env.NODE_ENV !== "production") {
   app.listen(port, () => {
     console.log(`Server is working on port ${port}`);
