@@ -2,15 +2,8 @@
   "version": 2,
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/server.cjs"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/server.cjs"
     }
   ]
 }
