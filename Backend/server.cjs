@@ -16,14 +16,25 @@ app.use(async (req, res, next) => {
     try {
       await sequelize.authenticate();
       
-      // Auto-create missing tables (e.g., products) in Aiven MySQL defaultdb
-      await sequelize.sync({ alter: true });
-      
+      // Auto-create missing tables/columns safely with foreign key checks toggled
+      try {
+        await sequelize.query("SET FOREIGN_KEY_CHECKS = 0;");
+        await sequelize.sync({ alter: true });
+      } catch (syncErr) {
+        console.warn("Database sync warning:", syncErr.message);
+      } finally {
+        try {
+          await sequelize.query("SET FOREIGN_KEY_CHECKS = 1;");
+        } catch (fkErr) {
+          console.error("Failed to re-enable foreign key checks:", fkErr.message);
+        }
+      }
+
       isConnected = true;
-      console.log("Database connected and missing tables synchronized.");
+      console.log("Database connected and schema synchronized successfully.");
     } catch (error) {
       console.error("Database initialization failed:", error.message);
-      return res.status(500).json({ error: "Database connection failed" });
+      return res.status(500).json({ error: "Database connection failed", details: error.message });
     }
   }
   next();

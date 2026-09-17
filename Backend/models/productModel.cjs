@@ -5,7 +5,8 @@ const Product = sequelize.define('Product', {
     id: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
-        primaryKey: true
+        primaryKey: true,
+        field: 'id'
     },
     title: {
         type: DataTypes.STRING,
@@ -36,19 +37,24 @@ const Product = sequelize.define('Product', {
     },
     images: {
         type: DataTypes.TEXT("long"),
-        allowNull: true, // MySQL LONGTEXT par DEFAULT error se bachne ke liye true rakha hai
+        allowNull: true, // MySQL strict mode: NO defaultValue on TEXT/LONGTEXT
         field: 'images',
         get() {
             const value = this.getDataValue("images");
             if (!value) return [];
+            if (Array.isArray(value)) return value;
             try {
-                return JSON.parse(value);
+                return typeof value === "string" ? JSON.parse(value) : value;
             } catch {
                 return [];
             }
         },
         set(value) {
-            this.setDataValue("images", JSON.stringify(value || []));
+            if (typeof value === "string") {
+                this.setDataValue("images", value);
+            } else {
+                this.setDataValue("images", JSON.stringify(value || []));
+            }
         }
     },
     category: {
@@ -66,12 +72,26 @@ const Product = sequelize.define('Product', {
     vendor_id: {
         type: DataTypes.UUID,
         allowNull: false,
-        field: 'vendor_id'
+        field: 'vendor_id',
+        references: {
+            model: 'users',
+            key: 'id'
+        }
     }
 }, {
     tableName: 'products',
     timestamps: true,
     underscored: true
+});
+
+// Backward-compatibility: allow accessing product.vendorId seamlessly
+Object.defineProperty(Product.prototype, 'vendorId', {
+    get() {
+        return this.vendor_id;
+    },
+    set(val) {
+        this.vendor_id = val;
+    }
 });
 
 module.exports = Product;

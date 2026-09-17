@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node server.cjs",
-    "dev": "nodemon server.cjs"
+    "dev": "nodemon server.cjs",
+    "db:sync": "node createtable.js"
   },
   "keywords": [],
   "author": "",

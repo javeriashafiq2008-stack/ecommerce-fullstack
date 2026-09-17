@@ -48,7 +48,7 @@ const checkout = async (req, res) => {
 
     if (cartItems.length === 0 && Array.isArray(req.body.items) && req.body.items.length > 0) {
       for (const item of req.body.items) {
-        const pId = item.productId || item.id;
+        const pId = item.productId || item.product_id || item.id;
         const pQty = Number(item.qty || item.quantity || 1);
         if (pId) {
           await CartItem.create(
@@ -134,7 +134,7 @@ const checkout = async (req, res) => {
     });
   } catch (error) {
     await transaction.rollback();
-    console.error("Checkout Error:", error);
+    console.error("API Error in checkout:", error);
     return res.status(500).json({
       success: false,
       message: error.message,
@@ -144,7 +144,10 @@ const checkout = async (req, res) => {
 
 const getMyOrders = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized." });
+    }
     const orders = await Order.findAll({
       where: { userId },
       include: [
@@ -161,6 +164,7 @@ const getMyOrders = async (req, res) => {
       orders,
     });
   } catch (error) {
+    console.error("API Error in getMyOrders:", error);
     return res.status(500).json({
       success: false,
       message: error.message,

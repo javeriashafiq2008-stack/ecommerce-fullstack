@@ -60,4 +60,14 @@ const User = sequelize.define(
   }
 );
 
+// Backward-compatibility: allow accessing user.profile_image seamlessly
+Object.defineProperty(User.prototype, 'profile_image', {
+  get() {
+    return this.profileImage;
+  },
+  set(val) {
+    this.profileImage = val;
+  }
+});
+
 module.exports = User;

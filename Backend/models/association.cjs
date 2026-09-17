@@ -6,74 +6,74 @@ const Order = require("./orderModel.cjs");
 const OrderItem = require("./orderitemModel.cjs");
 
 User.hasMany(Product, {
-  foreignKey: "vendor_id",
+  foreignKey: { name: "vendor_id", field: "vendor_id" },
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
 });
 
 Product.belongsTo(User, {
-  foreignKey: "vendor_id",
+  foreignKey: { name: "vendor_id", field: "vendor_id" },
   as: "Vendor",
 });
 
 User.hasOne(Cart, {
-  foreignKey: "userId",
+  foreignKey: { name: "userId", field: "user_id" },
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
 });
 
 Cart.belongsTo(User, {
-  foreignKey: "userId",
+  foreignKey: { name: "userId", field: "user_id" },
 });
 
 Cart.hasMany(CartItem, {
-  foreignKey: "cartId",
+  foreignKey: { name: "cartId", field: "cart_id" },
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
 });
 
 CartItem.belongsTo(Cart, {
-  foreignKey: "cartId",
+  foreignKey: { name: "cartId", field: "cart_id" },
 });
 
 Product.hasMany(CartItem, {
-  foreignKey: "productId",
+  foreignKey: { name: "productId", field: "product_id" },
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
 });
 
 CartItem.belongsTo(Product, {
-  foreignKey: "productId",
+  foreignKey: { name: "productId", field: "product_id" },
 });
 
 User.hasMany(Order, {
-  foreignKey: "userId",
+  foreignKey: { name: "userId", field: "user_id" },
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
 });
 
 Order.belongsTo(User, {
-  foreignKey: "userId",
+  foreignKey: { name: "userId", field: "user_id" },
 });
 
 Order.hasMany(OrderItem, {
-  foreignKey: "orderId",
+  foreignKey: { name: "orderId", field: "order_id" },
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
 });
 
 OrderItem.belongsTo(Order, {
-  foreignKey: "orderId",
+  foreignKey: { name: "orderId", field: "order_id" },
 });
 
 Product.hasMany(OrderItem, {
-  foreignKey: "productId",
+  foreignKey: { name: "productId", field: "product_id" },
   onDelete: "CASCADE",
   onUpdate: "CASCADE",
 });
 
 OrderItem.belongsTo(Product, {
-  foreignKey: "productId",
+  foreignKey: { name: "productId", field: "product_id" },
 });
 
 module.exports = {

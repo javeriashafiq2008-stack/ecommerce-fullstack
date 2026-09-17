@@ -25,6 +25,7 @@ const getVendorProducts = async (req, res) => {
         });
 
     } catch (error) {
+        console.error("API Error in getVendorProducts:", error);
         return res.status(500).json({
             success: false,
             message: error.message
@@ -67,12 +68,11 @@ const createProduct = async (req, res) => {
         });
 
     } catch (error) {
-
+        console.error("API Error in createProduct:", error);
         return res.status(500).json({
             success: false,
             message: error.message
         });
-
     }
 };
 
@@ -126,12 +126,11 @@ const updateProduct = async (req, res) => {
         });
 
     } catch (error) {
-
+        console.error("API Error in updateProduct:", error);
         return res.status(500).json({
             success: false,
             message: error.message
         });
-
     }
 };
 
@@ -173,12 +172,11 @@ const deleteProduct = async (req, res) => {
         });
 
     } catch (error) {
-
+        console.error("API Error in deleteProduct:", error);
         return res.status(500).json({
             success: false,
             message: error.message
         });
-
     }
 };
 
@@ -236,14 +234,11 @@ const getVendorOrders = async (req, res) => {
         });
 
     } catch (error) {
-
+        console.error("API Error in getVendorOrders:", error);
         return res.status(500).json({
-
             success: false,
             message: error.message
-
         });
-
     }
 
 };
@@ -352,15 +347,11 @@ const getVendorDashboardStats = async (req, res) => {
         });
 
     } catch (error) {
-
+        console.error("API Error in getVendorDashboardStats:", error);
         return res.status(500).json({
-
             success: false,
-
             message: error.message
-
         });
-
     }
 
 };

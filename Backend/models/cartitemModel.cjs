@@ -41,4 +41,23 @@ const CartItem = sequelize.define('CartItem', {
   underscored: true, // Ensures created_at & updated_at columns are used
 });
 
+// Backward-compatibility: allow accessing cartItem.product_id and cartItem.cart_id seamlessly
+Object.defineProperty(CartItem.prototype, 'product_id', {
+  get() {
+    return this.productId;
+  },
+  set(val) {
+    this.productId = val;
+  },
+});
+
+Object.defineProperty(CartItem.prototype, 'cart_id', {
+  get() {
+    return this.cartId;
+  },
+  set(val) {
+    this.cartId = val;
+  },
+});
+
 module.exports = CartItem;

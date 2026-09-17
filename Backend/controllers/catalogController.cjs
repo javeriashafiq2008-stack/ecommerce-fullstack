@@ -36,6 +36,7 @@ const getAllProducts = async (req, res) => {
 
     return res.status(200).json({ success: true, count: products.length, data: products });
   } catch (error) {
+    console.error("API Error in getAllProducts:", error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -60,6 +61,7 @@ const getProductDetails = async (req, res) => {
 
     return res.status(200).json({ success: true, data: product });
   } catch (error) {
+    console.error("API Error in getProductDetails:", error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };

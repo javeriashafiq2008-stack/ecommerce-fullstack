@@ -12,6 +12,10 @@ const Order = sequelize.define("Order", {
         type: DataTypes.UUID,
         allowNull: false,
         field: "user_id",
+        references: {
+            model: "users",
+            key: "id",
+        },
     },
     totalAmount: {
         type: DataTypes.DECIMAL(10, 2),
@@ -48,6 +52,25 @@ const Order = sequelize.define("Order", {
     tableName: "orders",
     timestamps: true,
     underscored: true,
+});
+
+// Backward-compatibility: allow accessing order.user_id seamlessly
+Object.defineProperty(Order.prototype, 'user_id', {
+    get() {
+        return this.userId;
+    },
+    set(val) {
+        this.userId = val;
+    }
+});
+
+Object.defineProperty(Order.prototype, 'total_amount', {
+    get() {
+        return this.totalAmount;
+    },
+    set(val) {
+        this.totalAmount = val;
+    }
 });
 
 module.exports = Order;

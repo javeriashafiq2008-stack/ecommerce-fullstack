@@ -43,4 +43,23 @@ const OrderItem = sequelize.define("OrderItem", {
     underscored: true,
 });
 
+// Backward-compatibility: allow accessing orderItem.order_id and orderItem.product_id seamlessly
+Object.defineProperty(OrderItem.prototype, 'order_id', {
+    get() {
+        return this.orderId;
+    },
+    set(val) {
+        this.orderId = val;
+    }
+});
+
+Object.defineProperty(OrderItem.prototype, 'product_id', {
+    get() {
+        return this.productId;
+    },
+    set(val) {
+        this.productId = val;
+    }
+});
+
 module.exports = OrderItem;

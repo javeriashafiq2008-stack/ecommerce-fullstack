@@ -11,6 +11,8 @@ const catalogRoute = require("./routes/catalogRoute.cjs");
 const cartRoute = require("./routes/cartRoute.cjs");
 const checkoutRoute = require("./routes/orderRoute.cjs");
 const adminRoute = require("./routes/adminRoute.cjs");
+const authenticate = require("./middleware/authenticate.cjs");
+const { addToCart } = require("./controllers/cartController.cjs");
 
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -73,7 +75,11 @@ apiRouter.use("/vendor", vendorRoute);
 apiRouter.use("/products", catalogRoute);
 apiRouter.use("/cart", cartRoute);
 apiRouter.use("/checkout", checkoutRoute);
+apiRouter.use("/orders", checkoutRoute);
 apiRouter.use("/admin", adminRoute);
+
+// Direct endpoint aliases for seamless backward compatibility
+apiRouter.post("/addtocart", authenticate, addToCart);
 
 app.use("/api", apiRouter);
 app.use("/", apiRouter);
