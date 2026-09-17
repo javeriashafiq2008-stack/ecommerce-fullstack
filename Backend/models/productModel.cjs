@@ -10,7 +10,7 @@ const Product = sequelize.define('Product', {
     title: {
         type: DataTypes.STRING,
         allowNull: false,
-        field: 'title', // Explicitly map to MySQL 'title' column
+        field: 'title',
         validate: {
             notEmpty: true
         }
@@ -36,8 +36,7 @@ const Product = sequelize.define('Product', {
     },
     images: {
         type: DataTypes.TEXT("long"),
-        allowNull: false,
-        defaultValue: "[]",
+        allowNull: true, // MySQL LONGTEXT par DEFAULT error se bachne ke liye true rakha hai
         field: 'images',
         get() {
             const value = this.getDataValue("images");
@@ -70,7 +69,7 @@ const Product = sequelize.define('Product', {
         field: 'vendor_id'
     }
 }, {
-    tableName: 'products', // Table name explicit set karein
+    tableName: 'products',
     timestamps: true,
     underscored: true
 });
