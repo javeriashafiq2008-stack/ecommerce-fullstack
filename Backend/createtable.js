@@ -161,14 +161,14 @@ async function syncAndSeedDatabase() {
     await sequelize.query("SET FOREIGN_KEY_CHECKS = 0;");
     console.log("Foreign key checks disabled.");
 
-    // 2. Synchronize schema
-    const isForce = process.argv.includes('--force');
-    if (isForce) {
-      console.log("Running sequelize.sync({ force: true }) - Rebuilding all tables...");
-      await sequelize.sync({ force: true });
-    } else {
+    // 2. Synchronize schema (Rebuild all tables safely with force: true unless --alter is specified)
+    const isAlter = process.argv.includes('--alter');
+    if (isAlter) {
       console.log("Running sequelize.sync({ alter: true }) - Aligning schema...");
       await sequelize.sync({ alter: true });
+    } else {
+      console.log("Running sequelize.sync({ force: true }) - Rebuilding all tables...");
+      await sequelize.sync({ force: true });
     }
 
     console.log("Tables synchronized successfully.");

@@ -14,11 +14,11 @@ const addToCart = async (req, res) => {
         }
 
         // Dynamically handle both productId, product_id, and id
-        const productId = req.body.productId || req.body.product_id || req.body.id;
+        const targetProductId = req.body.productId || req.body.product_id || req.body.id;
         const rawQuantity = req.body.quantity != null ? req.body.quantity : req.body.qty;
         const quantity = parseInt(rawQuantity, 10);
 
-        if (!productId || isNaN(quantity) || quantity < 1) {
+        if (!targetProductId || isNaN(quantity) || quantity < 1) {
             return res.status(400).json({
                 success: false,
                 message: "Invalid product or quantity."
@@ -28,12 +28,13 @@ const addToCart = async (req, res) => {
         transaction = await sequelize.transaction();
 
         // Prevent MySQL Foreign Key Constraint errors by checking if product exists
-        const product = await Product.findByPk(productId, { transaction });
+        const product = await Product.findByPk(targetProductId, { transaction });
         if (!product) {
             await transaction.rollback();
             return res.status(404).json({
                 success: false,
-                message: "Product not found."
+                message: "Product not found in database",
+                receivedId: targetProductId
             });
         }
 
@@ -46,7 +47,7 @@ const addToCart = async (req, res) => {
 
         // Row-level lock prevents race conditions during rapid button clicking
         let cartItem = await CartItem.findOne({
-            where: { cartId: cart.id, productId },
+            where: { cartId: cart.id, productId: targetProductId },
             transaction,
             lock: transaction.LOCK.UPDATE
         });
@@ -57,7 +58,7 @@ const addToCart = async (req, res) => {
         } else {
             cartItem = await CartItem.create({
                 cartId: cart.id,
-                productId,
+                productId: targetProductId,
                 quantity
             }, { transaction });
         }

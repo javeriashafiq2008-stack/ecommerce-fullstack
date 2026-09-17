@@ -43,7 +43,7 @@ const getAllProducts = async (req, res) => {
 
 const getProductDetails = async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id || req.query.id || req.query.productId;
 
     const product = await Product.findByPk(id, {
       include: [

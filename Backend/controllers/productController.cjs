@@ -83,7 +83,7 @@ const updateProduct = async (req, res) => {
     try {
 
         const vendorId = req.user.id;
-        const { id } = req.params;
+        const id = req.params.id || req.body.productId || req.body.product_id || req.body.id || req.query.id;
 
         const product = await Product.findByPk(id);
 
@@ -142,7 +142,7 @@ const deleteProduct = async (req, res) => {
     try {
 
         const vendorId = req.user.id;
-        const { id } = req.params;
+        const id = req.params.id || req.body.productId || req.body.product_id || req.body.id || req.query.id;
 
         const product = await Product.findByPk(id);
 

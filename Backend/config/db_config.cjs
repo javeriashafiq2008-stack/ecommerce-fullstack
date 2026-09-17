@@ -45,8 +45,8 @@ const connectionConfig = {
   },
   // Dynamic connection keep-alive / retry logic to handle cloud latency gracefully
   retry: {
-    max: 3,
-    timeout: 3000,
+    max: 5,
+    timeout: 30000,
     match: [
       /SequelizeConnectionError/,
       /SequelizeConnectionRefusedError/,

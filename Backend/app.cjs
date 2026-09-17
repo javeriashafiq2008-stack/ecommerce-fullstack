@@ -80,9 +80,13 @@ apiRouter.use("/admin", adminRoute);
 
 // Direct endpoint aliases for seamless backward compatibility
 apiRouter.post("/addtocart", authenticate, addToCart);
+apiRouter.post("/add", authenticate, addToCart);
+apiRouter.post("/cart/addtocart", authenticate, addToCart);
+apiRouter.post("/cart/add", authenticate, addToCart);
 
 app.use("/api", apiRouter);
 app.use("/", apiRouter);
+
 
 // =========================
 // 404 Handler (MUST be after all routes)
