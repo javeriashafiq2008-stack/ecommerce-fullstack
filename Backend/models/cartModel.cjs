@@ -5,11 +5,13 @@ const Cart = sequelize.define('Cart', {
     id: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
-        primaryKey: true
+        primaryKey: true,
+        field: "id"
     }
 }, {
+    tableName: 'carts', // Explicit MySQL table name
     timestamps: true,
-    underscored: true 
+    underscored: true // Ensure created_at & updated_at columns are used
 });
 
 module.exports = Cart;
