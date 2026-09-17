@@ -1,38 +1,37 @@
 const sequelize = require('./config/db_config.cjs');
-const Product = require('./models/productModel.cjs');
 
-async function resetAndSyncDatabase() {
+async function fixDatabaseSchema() {
   try {
-    console.log("Connecting to Aiven MySQL...");
+    console.log("Connecting to Aiven MySQL database...");
     await sequelize.authenticate();
-    console.log("Database connection successful!");
 
-    // 1. Existing table ko safe side par drop karein taake old mismatched columns remove ho jayein
+    await sequelize.query("SET FOREIGN_KEY_CHECKS = 0;");
     await sequelize.query("DROP TABLE IF EXISTS products;");
-    console.log("Old products table dropped.");
 
-    // 2. Model ke exact attributes (id UUID, title, price, description, images, image_url, etc.) ke sath fresh table create karein
-    await sequelize.sync({ force: true });
-    console.log("Fresh products table created with all required columns!");
+    // LONGTEXT ki bajaye JSON type use karein
+    await sequelize.query(`
+      CREATE TABLE products (
+        id VARCHAR(36) NOT NULL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        price DECIMAL(10, 2) NOT NULL,
+        description TEXT,
+        image_url VARCHAR(500),
+        images JSON NULL,
+        category VARCHAR(100),
+        stock INT NOT NULL DEFAULT 0,
+        vendor_id VARCHAR(36) NOT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
 
-    // 3. (Optional) Single sample product insert karein test karne ke liye
-    await Product.create({
-      title: "Sample Leather Jacket",
-      price: 99.99,
-      description: "High quality premium leather jacket",
-      imageUrl: "https://via.placeholder.com/300",
-      images: ["https://via.placeholder.com/300", "https://via.placeholder.com/300"],
-      category: "Clothing",
-      stock: 10,
-      vendor_id: "123e4567-e89b-12d3-a456-426614174000" // Valid UUID string
-    });
-    console.log("Sample product inserted successfully!");
-
+    await sequelize.query("SET FOREIGN_KEY_CHECKS = 1;");
+    console.log("Fresh 'products' table created successfully!");
     process.exit(0);
   } catch (error) {
-    console.error("Database reset failed:", error.message);
+    console.error("Schema fix failed:", error);
     process.exit(1);
   }
 }
 
-resetAndSyncDatabase();
+fixDatabaseSchema();
