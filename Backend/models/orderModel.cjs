@@ -73,4 +73,40 @@ Object.defineProperty(Order.prototype, 'total_amount', {
     }
 });
 
+Object.defineProperty(Order.prototype, 'payment_method', {
+    get() {
+        return this.paymentMethod;
+    },
+    set(val) {
+        this.paymentMethod = val;
+    }
+});
+
+Object.defineProperty(Order.prototype, 'payment_status', {
+    get() {
+        return this.paymentStatus;
+    },
+    set(val) {
+        this.paymentStatus = val;
+    }
+});
+
+Object.defineProperty(Order.prototype, 'order_status', {
+    get() {
+        return this.orderStatus;
+    },
+    set(val) {
+        this.orderStatus = val;
+    }
+});
+
+Object.defineProperty(Order.prototype, 'shipping_address', {
+    get() {
+        return this.shippingAddress;
+    },
+    set(val) {
+        this.shippingAddress = val;
+    }
+});
+
 module.exports = Order;

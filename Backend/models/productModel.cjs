@@ -94,4 +94,13 @@ Object.defineProperty(Product.prototype, 'vendorId', {
     }
 });
 
+Object.defineProperty(Product.prototype, 'image_url', {
+    get() {
+        return this.imageUrl;
+    },
+    set(val) {
+        this.imageUrl = val;
+    }
+});
+
 module.exports = Product;

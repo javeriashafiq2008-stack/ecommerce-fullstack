@@ -133,7 +133,13 @@ const checkout = async (req, res) => {
       order,
     });
   } catch (error) {
-    await transaction.rollback();
+    if (transaction && !transaction.finished) {
+      try {
+        await transaction.rollback();
+      } catch (rbErr) {
+        console.error("Rollback error:", rbErr.message);
+      }
+    }
     console.error("API Error in checkout:", error);
     return res.status(500).json({
       success: false,

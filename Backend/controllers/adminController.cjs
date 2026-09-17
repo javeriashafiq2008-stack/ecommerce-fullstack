@@ -9,9 +9,10 @@ const getDashboardStats = async (req, res) => {
     const totalProducts = await Product.count();
     const totalOrders = await Order.count();
 
-    const revenue = await Order.sum("totalAmount", {
-      where: { paymentStatus: "Paid" },
-    });
+    const revenue =
+      (await Order.sum("totalAmount", {
+        where: { paymentStatus: "Paid" },
+      })) || 0;
 
     const recentOrders = await Order.findAll({
       limit: 5,
