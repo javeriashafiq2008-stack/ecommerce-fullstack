@@ -32,7 +32,6 @@ const connectionConfig = {
   dialectOptions: {
     ...(sslConfig ? { ssl: sslConfig } : {}),
     connectTimeout: 30000,
-    keepAlive: true,
   },
   // Pool settings for serverless:
   // - Low max connections prevents exhausting Aiven connection pool limits across concurrent lambdas.
