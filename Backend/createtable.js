@@ -1,45 +1,24 @@
-import pool from './config/db_config.cjs'; // Apne db.js connection file ka exact path check kar lein
+const sequelize = require('./config/db_config.cjs');
 
 async function setupDatabase() {
   try {
-    console.log("Connecting to Aiven MySQL and creating tables...");
+    console.log("Connecting to Aiven MySQL and fixing schema...");
 
-    // 1. Create Users Table
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        role ENUM('user', 'admin') DEFAULT 'user',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
+    // 1. Rename 'name' column to 'title' if it exists in raw products table
+    try {
+      await sequelize.query(`
+        ALTER TABLE products CHANGE COLUMN name title VARCHAR(255) NOT NULL;
+      `);
+      console.log("Renamed 'name' column to 'title'.");
+    } catch (e) {
+      console.log("Column 'title' already aligned or table recreated.");
+    }
 
-    // 2. Create Products Table
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS products (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        description TEXT,
-        price DECIMAL(10, 2) NOT NULL,
-        image_url VARCHAR(500),
-        category VARCHAR(100),
-        stock INT DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
+    // 2. Sync Sequelize models with Aiven MySQL DB
+    await sequelize.sync({ alter: true });
+    console.log("Sequelize models synchronized successfully!");
 
-    // 3. Insert Dummy Products
-    await pool.query(`
-      INSERT INTO products (name, description, price, image_url, category, stock)
-      VALUES 
-      ('Classic T-Shirt', 'High quality cotton t-shirt', 19.99, 'https://via.placeholder.com/150', 'Clothing', 50),
-      ('Wireless Headphones', 'Noise cancelling bluetooth headphones', 89.99, 'https://via.placeholder.com/150', 'Electronics', 20)
-      ON DUPLICATE KEY UPDATE id=id;
-    `);
-
-    console.log("All tables created and sample data inserted successfully!");
+    console.log("Database setup complete!");
     process.exit(0);
   } catch (error) {
     console.error("Database setup failed:", error);
